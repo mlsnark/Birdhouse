@@ -1,0 +1,29 @@
+{
+  "rules": {
+    "sessions": {
+      "$roomCode": {
+        // Anyone can read a session (needed to join with a code).
+        ".read": true,
+
+        // Only allow creation if the session doesn't exist yet.
+        ".write": "!data.exists()",
+
+        "status": {
+          // Allow status updates (host changing to 'starting').
+          ".write": true
+        },
+        "startAt": {
+          ".write": true
+        },
+
+        "participants": {
+          "$deviceId": {
+            // A participant can write their own entry; host can write anyone's.
+            ".write": true,
+            ".read": true
+          }
+        }
+      }
+    }
+  }
+}
