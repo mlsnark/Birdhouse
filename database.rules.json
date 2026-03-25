@@ -1,26 +1,41 @@
 {
   "rules": {
+    // Deny everything by default — only explicitly allowed paths work.
+    ".read": false,
+    ".write": false,
+
     "sessions": {
       "$roomCode": {
-        // Anyone can read a session (needed to join with a code).
+        // Anyone can read a session (needed to join with a room code).
         ".read": true,
 
-        // Only allow creation if the session doesn't exist yet.
+        // A session can only be created, never overwritten as a whole.
         ".write": "!data.exists()",
 
         "status": {
-          // Allow status updates (host changing to 'starting').
-          ".write": true
+          // Allow status to be updated while the session exists.
+          ".write": "data.parent().exists()"
         },
+
         "startAt": {
-          ".write": true
+          ".write": "data.parent().exists()"
         },
 
         "participants": {
           "$deviceId": {
-            // A participant can write their own entry; host can write anyone's.
-            ".write": true,
-            ".read": true
+            // Any device can create or update its own participant entry.
+            ".read": true,
+            ".write": "data.parent().parent().exists() || !data.exists()"
+          }
+        },
+
+        "roles": {
+          "$roleId": {
+            ".read": true,
+            "takenBy": {
+              // A role can be claimed or released while the session is in lobby.
+              ".write": "data.parent().parent().parent().child('status').val() === 'lobby'"
+            }
           }
         }
       }
