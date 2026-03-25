@@ -37,6 +37,8 @@ import {
   endSession,
 } from '../services/sessionService';
 import { getLibrary, addTrack, removeTrack } from '../services/trackLibrary';
+import { uploadTrack } from '../services/storageService';
+import * as DocumentPicker from 'expo-document-picker';
 import { getDeviceId } from '../utils/deviceId';
 import clockSync from '../services/clockSync';
 import audioPlayer from '../services/audioPlayer';
@@ -46,12 +48,43 @@ import audioPlayer from '../services/audioPlayer';
 function LibraryPickerModal({ visible, library, onSelect, onClose, onAddToLibrary }) {
   const [newName, setNewName] = useState('');
   const [newUrl, setNewUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   async function handleAdd() {
     if (!newName.trim() || !newUrl.trim()) return;
     await onAddToLibrary(newName.trim(), newUrl.trim());
     setNewName('');
     setNewUrl('');
+  }
+
+  async function handleUpload() {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'audio/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+      const filename = file.name ?? `track_${Date.now()}.mp3`;
+
+      setUploading(true);
+      setUploadProgress(0);
+
+      const url = await uploadTrack(file.uri, filename, setUploadProgress);
+
+      // Pre-fill name from filename (strip extension)
+      const baseName = filename.replace(/\.[^/.]+$/, '');
+      setNewUrl(url);
+      if (!newName.trim()) setNewName(baseName);
+    } catch (err) {
+      Alert.alert('Upload failed', err.message ?? 'Could not upload file.');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
   }
 
   return (
@@ -67,6 +100,27 @@ function LibraryPickerModal({ visible, library, onSelect, onClose, onAddToLibrar
         <ScrollView style={modal.scroll} keyboardShouldPersistTaps="handled">
           {/* Add new track */}
           <Text style={modal.sectionLabel}>Add New Track</Text>
+
+          {/* Upload button */}
+          <TouchableOpacity
+            style={[modal.uploadBtn, uploading && modal.addBtnDisabled]}
+            onPress={handleUpload}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <View style={modal.uploadingRow}>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={modal.uploadBtnText}>
+                  Uploading… {Math.round(uploadProgress * 100)}%
+                </Text>
+              </View>
+            ) : (
+              <Text style={modal.uploadBtnText}>Upload from Phone</Text>
+            )}
+          </TouchableOpacity>
+
+          <Text style={modal.orDivider}>— or paste a URL —</Text>
+
           <TextInput
             style={modal.input}
             placeholder="Track name (e.g. Soprano Part)"
@@ -684,6 +738,10 @@ const modal = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 12,
     color: colors.text, fontSize: 14, marginBottom: 10,
   },
+  uploadBtn: { backgroundColor: colors.accent, borderRadius: radius.md, paddingVertical: 14, alignItems: 'center', marginBottom: 12 },
+  uploadBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  uploadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  orDivider: { textAlign: 'center', color: colors.textDim, fontSize: 12, marginBottom: 12 },
   addBtn: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
   addBtnDisabled: { opacity: 0.4 },
   addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
