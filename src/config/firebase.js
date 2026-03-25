@@ -10,13 +10,14 @@ import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-  databaseURL: 'https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT_ID.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: "AIzaSyD3QAoojNhdj8LPAYJcNWB-g4hlH1-mF38",
+  authDomain: "birdhouse-fb026.firebaseapp.com",
+  databaseURL: "https://birdhouse-fb026-default-rtdb.firebaseio.com",
+  projectId: "birdhouse-fb026",
+  storageBucket: "birdhouse-fb026.firebasestorage.app",
+  messagingSenderId: "959460946924",
+  appId: "1:959460946924:web:a6738b6651e1171f33c6c9",
+  measurementId: "G-6Z04YTEQWW"
 };
 
 const app = initializeApp(firebaseConfig);
