@@ -1,40 +1,47 @@
 /**
- * storageService — upload audio files to Firebase Storage.
- * Returns a public download URL usable as a track URL.
+ * storageService — upload audio and image files to Firebase Storage.
  */
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '../config/firebase';
 
-/**
- * Upload a local file URI to Firebase Storage.
- * @param {string} localUri   - URI from expo-document-picker
- * @param {string} filename   - Original filename (used in storage path)
- * @param {function} onProgress - Called with 0–1 progress value
- * @returns {Promise<string>} Firebase Storage download URL
- */
-export async function uploadTrack(localUri, filename, onProgress) {
+async function uploadFile(localUri, storagePath, onProgress) {
   const response = await fetch(localUri);
   const blob = await response.blob();
-
-  const storageRef = ref(storage, `tracks/${Date.now()}_${filename}`);
+  const storageRef = ref(storage, storagePath);
 
   return new Promise((resolve, reject) => {
     const task = uploadBytesResumable(storageRef, blob);
-
     task.on(
       'state_changed',
-      (snapshot) => {
-        onProgress?.(snapshot.bytesTransferred / snapshot.totalBytes);
-      },
+      (snapshot) => onProgress?.(snapshot.bytesTransferred / snapshot.totalBytes),
       reject,
       async () => {
         try {
-          const url = await getDownloadURL(task.snapshot.ref);
-          resolve(url);
+          resolve(await getDownloadURL(task.snapshot.ref));
         } catch (err) {
           reject(err);
         }
       },
     );
   });
+}
+
+/**
+ * Upload an audio file. Returns a public download URL.
+ * @param {string} localUri
+ * @param {string} filename
+ * @param {function} onProgress  - called with 0–1
+ */
+export function uploadTrack(localUri, filename, onProgress) {
+  return uploadFile(localUri, `tracks/${Date.now()}_${filename}`, onProgress);
+}
+
+/**
+ * Upload an experience poster image. Returns a public download URL.
+ * @param {string} localUri
+ * @param {string} experienceId
+ * @param {function} onProgress  - called with 0–1
+ */
+export function uploadImage(localUri, experienceId, onProgress) {
+  return uploadFile(localUri, `images/${experienceId}_${Date.now()}.jpg`, onProgress);
 }

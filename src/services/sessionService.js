@@ -4,19 +4,21 @@
  * Database schema:
  *
  *   sessions/{roomCode}/
+ *     experienceId  : string | null
+ *     title         : string | null  (copied from experience)
  *     hostId        : string
  *     status        : "lobby" | "starting" | "ended"
  *     createdAt     : number (server ms)
- *     startAt       : number | null  (server ms, set by host when starting)
- *     roles/                          (optional)
+ *     startAt       : number | null
+ *     roles/
  *       {roleId}/
- *         name      : string          (e.g. "Soprano")
+ *         name      : string
  *         trackUrl  : string
- *         takenBy   : string | null   (deviceId of participant who claimed it)
+ *         takenBy   : string | null
  *     participants/
  *       {deviceId}/
  *         name      : string
- *         trackUrl  : string          (set by host or auto-assigned via role)
+ *         trackUrl  : string
  *         ready     : boolean
  *         isHost    : boolean
  *         roleId    : string | null
@@ -35,25 +37,27 @@ import clockSync from './clockSync';
 
 // ─── Room code ────────────────────────────────────────────────────────────────
 
-const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1
+const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 export function generateRoomCode() {
   let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += CHARS[Math.floor(Math.random() * CHARS.length)];
-  }
+  for (let i = 0; i < 6; i++) code += CHARS[Math.floor(Math.random() * CHARS.length)];
   return code;
 }
 
 // ─── Session lifecycle ────────────────────────────────────────────────────────
 
 /**
- * Create a new session.  The host is also registered as a participant.
- * @param {string[]} roles  Array of { id, name, trackUrl } role objects.
+ * Create a new session. Optionally linked to an experience.
+ * @param {Array}  roles          - [{ id, name, trackUrl }]
+ * @param {string} experienceId   - optional Firebase experience key
+ * @param {string} experienceTitle- optional title copied from experience
  */
-export async function createSession(roomCode, hostId, hostName, hostTrackUrl = '', roles = []) {
+export async function createSession(
+  roomCode, hostId, hostName, hostTrackUrl = '',
+  roles = [], experienceId = null, experienceTitle = null,
+) {
   const sessionRef = ref(db, `sessions/${roomCode}`);
-
   const snap = await get(sessionRef);
   if (snap.exists()) throw new Error('Room code already in use. Try again.');
 
@@ -67,6 +71,8 @@ export async function createSession(roomCode, hostId, hostName, hostTrackUrl = '
     status: 'lobby',
     createdAt: clockSync.now(),
     startAt: null,
+    experienceId: experienceId || null,
+    title: experienceTitle || null,
     participants: {
       [hostId]: {
         name: hostName,
@@ -78,53 +84,34 @@ export async function createSession(roomCode, hostId, hostName, hostTrackUrl = '
     },
   };
 
-  if (roles.length > 0) {
-    sessionData.roles = rolesObj;
-  }
+  if (roles.length > 0) sessionData.roles = rolesObj;
 
   await set(sessionRef, sessionData);
   onDisconnect(sessionRef).remove();
-
   return roomCode;
 }
 
-/**
- * Fetch a session without joining it (used by JoinScreen to preview roles).
- */
+/** Fetch a session without joining (used to preview roles/experience). */
 export async function fetchSession(roomCode) {
   const snap = await get(ref(db, `sessions/${roomCode}`));
   if (!snap.exists()) throw new Error('Session not found. Check the room code.');
   return snap.val();
 }
 
-/**
- * Join an existing session as a participant (no roles).
- */
+/** Join without roles. */
 export async function joinSession(roomCode, deviceId, name) {
-  const sessionRef = ref(db, `sessions/${roomCode}`);
-  const snap = await get(sessionRef);
-
+  const snap = await get(ref(db, `sessions/${roomCode}`));
   if (!snap.exists()) throw new Error('Session not found. Check the room code.');
   const session = snap.val();
   if (session.status !== 'lobby') throw new Error('This session has already started.');
 
   const participantRef = ref(db, `sessions/${roomCode}/participants/${deviceId}`);
-  await set(participantRef, {
-    name,
-    trackUrl: '',
-    ready: false,
-    isHost: false,
-    roleId: null,
-  });
-
+  await set(participantRef, { name, trackUrl: '', ready: false, isHost: false, roleId: null });
   onDisconnect(participantRef).remove();
   return session;
 }
 
-/**
- * Join and simultaneously claim a role.
- * Validates the role is still unclaimed before writing.
- */
+/** Join and claim a role atomically. */
 export async function joinSessionWithRole(roomCode, deviceId, name, roleId) {
   const snap = await get(ref(db, `sessions/${roomCode}`));
   if (!snap.exists()) throw new Error('Session not found.');
@@ -148,13 +135,11 @@ export async function joinSessionWithRole(roomCode, deviceId, name, roleId) {
 
   onDisconnect(ref(db, `sessions/${roomCode}/participants/${deviceId}`)).remove();
   onDisconnect(ref(db, `sessions/${roomCode}/roles/${roleId}/takenBy`)).set(null);
-
   return session;
 }
 
 // ─── Host actions ─────────────────────────────────────────────────────────────
 
-/** Host sets/changes the track URL for any participant. */
 export function setParticipantTrack(roomCode, deviceId, trackUrl) {
   return update(ref(db, `sessions/${roomCode}/participants/${deviceId}`), {
     trackUrl,
@@ -162,38 +147,26 @@ export function setParticipantTrack(roomCode, deviceId, trackUrl) {
   });
 }
 
-/**
- * Host initiates the countdown.
- */
 export async function initiateStart(roomCode, countdownSeconds = 5) {
   const startAt = clockSync.now() + countdownSeconds * 1000;
-  await update(ref(db, `sessions/${roomCode}`), {
-    status: 'starting',
-    startAt,
-  });
+  await update(ref(db, `sessions/${roomCode}`), { status: 'starting', startAt });
   return startAt;
 }
 
-/** Host ends (or resets) the session. */
 export function endSession(roomCode) {
   return remove(ref(db, `sessions/${roomCode}`));
 }
 
 // ─── Participant actions ──────────────────────────────────────────────────────
 
-/** Participant marks their track as loaded and ready. */
 export function markReady(roomCode, deviceId, isReady) {
-  return update(ref(db, `sessions/${roomCode}/participants/${deviceId}`), {
-    ready: isReady,
-  });
+  return update(ref(db, `sessions/${roomCode}/participants/${deviceId}`), { ready: isReady });
 }
 
-// ─── Real-time listeners ──────────────────────────────────────────────────────
+// ─── Listeners ────────────────────────────────────────────────────────────────
 
-/** Subscribe to all session changes. Returns an unsubscribe function. */
 export function subscribeSession(roomCode, callback) {
-  const sessionRef = ref(db, `sessions/${roomCode}`);
-  return onValue(sessionRef, (snap) => {
+  return onValue(ref(db, `sessions/${roomCode}`), (snap) => {
     callback(snap.exists() ? snap.val() : null);
   });
 }

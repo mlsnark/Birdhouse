@@ -1,29 +1,39 @@
 {
   "rules": {
-    // Deny everything by default — only explicitly allowed paths work.
     ".read": false,
     ".write": false,
 
+    "experiences": {
+      // Anyone can read the full catalog.
+      ".read": true,
+
+      "$experienceId": {
+        // Anyone can create a new experience.
+        ".write": "!data.exists()",
+
+        // Creator can update or delete their own experience.
+        ".write": "data.child('createdByDeviceId').val() === auth.uid || !data.exists()",
+
+        // Fallback: allow writes without auth (no Firebase Auth yet).
+        // TODO: tighten once Firebase Auth is added.
+        ".write": true
+      }
+    },
+
     "sessions": {
       "$roomCode": {
-        // Anyone can read a session (needed to join with a room code).
         ".read": true,
-
-        // A session can only be created, never overwritten as a whole.
         ".write": "!data.exists()",
 
         "status": {
-          // Allow status to be updated while the session exists.
           ".write": "data.parent().exists()"
         },
-
         "startAt": {
           ".write": "data.parent().exists()"
         },
 
         "participants": {
           "$deviceId": {
-            // Any device can create or update its own participant entry.
             ".read": true,
             ".write": "data.parent().parent().exists() || !data.exists()"
           }
@@ -33,7 +43,6 @@
           "$roleId": {
             ".read": true,
             "takenBy": {
-              // A role can be claimed or released while the session is in lobby.
               ".write": "data.parent().parent().parent().child('status').val() === 'lobby'"
             }
           }
