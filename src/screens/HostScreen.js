@@ -12,7 +12,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator,
-  KeyboardAvoidingView, Platform, Image,
+  KeyboardAvoidingView, Platform, Image, Share,
 } from 'react-native';
 import { colors, radius } from '../theme';
 import {
@@ -163,6 +163,16 @@ export default function HostScreen({ navigation, route }) {
       return;
     }
     doStart();
+  }
+
+  async function handleShare() {
+    const title = session?.title ? `Join "${session.title}" on Birdhouse` : 'Join my Birdhouse session';
+    const message = session?.title
+      ? `Join "${session.title}" on Birdhouse!\nRoom code: ${roomCode}`
+      : `Join my Birdhouse session!\nRoom code: ${roomCode}`;
+    try {
+      await Share.share({ title, message });
+    } catch (_) {}
   }
 
   async function doStart() {
@@ -352,13 +362,13 @@ export default function HostScreen({ navigation, route }) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={s.lobbyScroll}>
 
-          {/* Room code */}
-          <View style={s.codeCard}>
+          {/* Room code — tap to share */}
+          <TouchableOpacity style={s.codeCard} onPress={handleShare} activeOpacity={0.85}>
             {session?.title && <Text style={s.sessionTitle}>{session.title}</Text>}
             <Text style={s.codeLabel}>ROOM CODE</Text>
             <Text style={s.codeText}>{roomCode}</Text>
-            <Text style={s.codeSub}>Share this code with all participants</Text>
-          </View>
+            <Text style={s.codeSub}>Tap to share with participants ↑</Text>
+          </TouchableOpacity>
 
           {/* Roles overview */}
           {hasRoles && (
