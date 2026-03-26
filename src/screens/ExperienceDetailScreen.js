@@ -9,7 +9,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, Image,
-  StyleSheet, SafeAreaView, TextInput, Alert, ActivityIndicator,
+  StyleSheet, SafeAreaView, TextInput, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { colors, radius } from '../theme';
 import { getDeviceId } from '../utils/deviceId';
@@ -26,6 +26,7 @@ export default function ExperienceDetailScreen({ navigation, route }) {
   const [isCreator, setIsCreator] = useState(false);
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomCode, setRoomCode] = useState('');
+  const scrollRef = useRef(null);
 
   const roles = experience?.roles
     ? Object.entries(experience.roles).map(([id, r]) => ({ id, ...r }))
@@ -62,7 +63,8 @@ export default function ExperienceDetailScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={s.safe}>
-      <ScrollView contentContainerStyle={s.scroll}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView ref={scrollRef} contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
         {/* Poster */}
         {experience.imageUrl ? (
@@ -114,7 +116,10 @@ export default function ExperienceDetailScreen({ navigation, route }) {
           {!showJoinInput ? (
             <TouchableOpacity
               style={s.secondaryBtn}
-              onPress={() => setShowJoinInput(true)}
+              onPress={() => {
+                setShowJoinInput(true);
+                setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+              }}
               activeOpacity={0.85}
             >
               <Text style={s.secondaryBtnText}>Join a Session</Text>
@@ -142,13 +147,14 @@ export default function ExperienceDetailScreen({ navigation, route }) {
           )}
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  scroll: { paddingBottom: 48 },
+  scroll: { paddingBottom: 80 },
 
   poster: { width: '100%', height: 280 },
   posterPlaceholder: { alignItems: 'center', justifyContent: 'center' },
