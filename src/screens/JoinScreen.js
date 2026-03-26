@@ -14,7 +14,7 @@ import {
   Platform, ScrollView, Image,
 } from 'react-native';
 import { colors, radius } from '../theme';
-import { fetchSession, joinSession, joinSessionWithRole } from '../services/sessionService';
+import { fetchSession, joinSession, joinSessionWithRole, joinLate } from '../services/sessionService';
 import { getDeviceId } from '../utils/deviceId';
 import clockSync from '../services/clockSync';
 import audioPlayer from '../services/audioPlayer';
@@ -35,6 +35,7 @@ export default function JoinScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState(null);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
+  const [lateJoin, setLateJoin] = useState(false);
 
   const deviceIdRef = useRef(null);
 
@@ -58,8 +59,28 @@ export default function JoinScreen({ navigation, route }) {
     setLoading(true);
     try {
       const data = await fetchSession(code);
+
+      if (data.status === 'starting') {
+        // Session already in progress — late join flow
+        const hasRoles = Object.keys(data.roles ?? {}).length > 0;
+        setSession(data);
+        setLateJoin(true);
+        if (hasRoles) {
+          setPhase('roles');
+          setLoading(false);
+        } else {
+          // No roles: join late with no track URL, go straight to playback
+          await joinLate(code, deviceIdRef.current, trimmedName, null);
+          navigation.replace('Playback', {
+            roomCode: code, deviceId: deviceIdRef.current,
+            trackUrl: '', startAt: data.startAt, isHost: false, lateJoin: true,
+          });
+        }
+        return;
+      }
+
       if (data.status !== 'lobby') {
-        Alert.alert('Session unavailable', 'This session has already started.');
+        Alert.alert('Session unavailable', 'This session has ended.');
         setLoading(false);
         return;
       }
@@ -89,8 +110,16 @@ export default function JoinScreen({ navigation, route }) {
 
     setLoading(true);
     try {
-      await joinSessionWithRole(code, deviceIdRef.current, trimmedName, selectedRoleId);
-      navigation.replace('Lobby', { roomCode: code, deviceId: deviceIdRef.current, name: trimmedName });
+      if (lateJoin) {
+        const { session: live, trackUrl } = await joinLate(code, deviceIdRef.current, trimmedName, selectedRoleId);
+        navigation.replace('Playback', {
+          roomCode: code, deviceId: deviceIdRef.current,
+          trackUrl, startAt: live.startAt, isHost: false, lateJoin: true,
+        });
+      } else {
+        await joinSessionWithRole(code, deviceIdRef.current, trimmedName, selectedRoleId);
+        navigation.replace('Lobby', { roomCode: code, deviceId: deviceIdRef.current, name: trimmedName });
+      }
     } catch (err) {
       Alert.alert('Could not join', err.message);
       try {
@@ -167,6 +196,12 @@ export default function JoinScreen({ navigation, route }) {
           </View>
         )}
 
+        {lateJoin && (
+          <View style={s.lateJoinBanner}>
+            <Text style={s.lateJoinText}>Session in progress — you'll sync to the current position</Text>
+          </View>
+        )}
+
         <Text style={s.title}>Pick Your Role</Text>
         <Text style={s.sub}>Select the part you will play in this session.</Text>
 
@@ -204,7 +239,9 @@ export default function JoinScreen({ navigation, route }) {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={s.primaryBtnText}>
-              {selectedRoleId ? `Join as ${roles[selectedRoleId]?.name}` : 'Select a Role'}
+              {selectedRoleId
+                ? (lateJoin ? `Join Live as ${roles[selectedRoleId]?.name}` : `Join as ${roles[selectedRoleId]?.name}`)
+                : 'Select a Role'}
             </Text>
           )}
         </TouchableOpacity>
@@ -272,4 +309,11 @@ const s = StyleSheet.create({
 
   backBtn: { marginTop: 16, alignItems: 'center', paddingVertical: 10 },
   backBtnText: { color: colors.textMuted, fontSize: 15 },
+
+  lateJoinBanner: {
+    backgroundColor: colors.accentDim ?? '#1a3a2a',
+    borderRadius: radius.md, padding: 12, marginBottom: 16,
+    borderWidth: 1, borderColor: colors.accent,
+  },
+  lateJoinText: { color: colors.accent, fontSize: 13, fontWeight: '600', textAlign: 'center' },
 });

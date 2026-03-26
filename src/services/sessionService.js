@@ -138,6 +138,28 @@ export async function joinSessionWithRole(roomCode, deviceId, name, roleId) {
   return session;
 }
 
+/**
+ * Join a session that is already in progress (status === 'starting').
+ * Picks up the track URL from the chosen role; does NOT claim takenBy
+ * (rules block that once session has started).
+ * Returns { session, trackUrl }.
+ */
+export async function joinLate(roomCode, deviceId, name, roleId) {
+  const snap = await get(ref(db, `sessions/${roomCode}`));
+  if (!snap.exists()) throw new Error('Session not found. Check the room code.');
+  const session = snap.val();
+  if (session.status !== 'starting') throw new Error('Session is not currently in progress.');
+
+  const trackUrl = roleId ? (session.roles?.[roleId]?.trackUrl ?? '') : '';
+
+  const participantRef = ref(db, `sessions/${roomCode}/participants/${deviceId}`);
+  await set(participantRef, {
+    name, trackUrl, ready: false, isHost: false, roleId: roleId ?? null,
+  });
+  onDisconnect(participantRef).remove();
+  return { session, trackUrl };
+}
+
 // ─── Host actions ─────────────────────────────────────────────────────────────
 
 export function setParticipantTrack(roomCode, deviceId, trackUrl) {

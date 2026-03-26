@@ -33,7 +33,7 @@ import { endSession } from '../services/sessionService';
 const COUNTDOWN_SECONDS = 5;
 
 export default function PlaybackScreen({ navigation, route }) {
-  const { roomCode, deviceId, trackUrl, startAt, isHost } = route.params;
+  const { roomCode, deviceId, trackUrl, startAt, isHost, lateJoin } = route.params;
 
   const [phase, setPhase] = useState('loading'); // 'loading' | 'countdown' | 'playing' | 'done'
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
@@ -56,13 +56,24 @@ export default function PlaybackScreen({ navigation, route }) {
 
         if (!mounted) return;
 
-        // Schedule playback.
+        const isAlreadyPlaying = lateJoin || clockSync.now() > startAt;
+
         if (trackUrl?.trim()) {
-          audioPlayer.schedulePlayback(startAt);
+          if (isAlreadyPlaying) {
+            // Late joiner: seek to current position and play immediately.
+            const offsetMs = Math.max(0, clockSync.now() - startAt);
+            await audioPlayer.playFromOffset(offsetMs);
+          } else {
+            audioPlayer.schedulePlayback(startAt);
+          }
         }
 
-        setPhase('countdown');
-        startCountdown();
+        if (isAlreadyPlaying) {
+          setPhase('playing');
+        } else {
+          setPhase('countdown');
+          startCountdown();
+        }
       } catch (err) {
         if (!mounted) return;
         setErrorMsg(err.message ?? 'Failed to load track');

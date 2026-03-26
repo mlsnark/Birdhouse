@@ -96,6 +96,25 @@ class AudioPlayerService {
     attempt();
   }
 
+  /**
+   * For late joiners: load, seek to offsetMs, and play immediately.
+   * The sound must already be loaded via loadTrack().
+   */
+  async playFromOffset(offsetMs) {
+    if (!this.sound) {
+      console.warn('[AudioPlayer] playFromOffset called with no loaded sound');
+      return;
+    }
+    this._clearTimers();
+    this._isScheduled = false;
+    try {
+      await this.sound.setPositionAsync(Math.max(0, offsetMs));
+      await this.sound.playAsync();
+    } catch (err) {
+      console.error('[AudioPlayer] playFromOffset error', err);
+    }
+  }
+
   async _fire() {
     if (!this.sound || !this._isScheduled) return;
     this._isScheduled = false;
