@@ -9,7 +9,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, Image,
-  StyleSheet, SafeAreaView, TextInput, Alert, KeyboardAvoidingView, Platform,
+  StyleSheet, SafeAreaView, TextInput, Alert, KeyboardAvoidingView, Platform, Keyboard,
 } from 'react-native';
 import { colors, radius } from '../theme';
 import { getDeviceId } from '../utils/deviceId';
@@ -27,6 +27,15 @@ export default function ExperienceDetailScreen({ navigation, route }) {
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomCode, setRoomCode] = useState('');
   const scrollRef = useRef(null);
+
+  // Scroll to bottom once keyboard is fully open
+  useEffect(() => {
+    if (!showJoinInput) return;
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+    return () => sub.remove();
+  }, [showJoinInput]);
 
   const roles = experience?.roles
     ? Object.entries(experience.roles).map(([id, r]) => ({ id, ...r }))
@@ -116,10 +125,7 @@ export default function ExperienceDetailScreen({ navigation, route }) {
           {!showJoinInput ? (
             <TouchableOpacity
               style={s.secondaryBtn}
-              onPress={() => {
-                setShowJoinInput(true);
-                setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-              }}
+              onPress={() => setShowJoinInput(true)}
               activeOpacity={0.85}
             >
               <Text style={s.secondaryBtnText}>Join a Session</Text>
