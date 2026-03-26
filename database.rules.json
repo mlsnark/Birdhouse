@@ -8,14 +8,8 @@
       ".read": true,
 
       "$experienceId": {
-        // Anyone can create a new experience.
-        ".write": "!data.exists()",
-
-        // Creator can update or delete their own experience.
-        ".write": "data.child('createdByDeviceId').val() === auth.uid || !data.exists()",
-
-        // Fallback: allow writes without auth (no Firebase Auth yet).
-        // TODO: tighten once Firebase Auth is added.
+        // Allow all writes until Firebase Auth is added.
+        // TODO: tighten to creator-only once auth is implemented.
         ".write": true
       }
     },
