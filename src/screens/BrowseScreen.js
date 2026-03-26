@@ -1,11 +1,11 @@
 /**
- * BrowseScreen — scrollable catalog of all published experiences.
- * Tap a card to view details. Tap + to create a new experience.
+ * BrowseScreen — 2-column grid of experiences.
+ * Each tile is a square image (or color placeholder) with the title overlaid.
  */
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, Image,
-  StyleSheet, SafeAreaView, ActivityIndicator,
+  StyleSheet, SafeAreaView, ActivityIndicator, Dimensions,
 } from 'react-native';
 import { colors, radius } from '../theme';
 import { subscribeExperiences } from '../services/experienceService';
@@ -18,32 +18,23 @@ function posterColor(title = '') {
   return POSTER_COLORS[h % POSTER_COLORS.length];
 }
 
-function ExperienceCard({ item, onPress }) {
-  const roleCount = Object.keys(item.roles || {}).length;
+const GAP = 10;
+const PADDING = 12;
+const TILE_SIZE = (Dimensions.get('window').width - PADDING * 2 - GAP) / 2;
+
+function ExperienceTile({ item, onPress }) {
   const bgColor = posterColor(item.title);
 
   return (
-    <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity style={s.tile} onPress={onPress} activeOpacity={0.8}>
       {item.imageUrl ? (
-        <Image source={{ uri: item.imageUrl }} style={s.poster} resizeMode="cover" />
+        <Image source={{ uri: item.imageUrl }} style={s.tileImage} resizeMode="cover" />
       ) : (
-        <View style={[s.poster, s.posterPlaceholder, { backgroundColor: bgColor }]}>
-          <Text style={s.posterInitial}>{(item.title || '?').charAt(0).toUpperCase()}</Text>
-        </View>
+        <View style={[s.tileImage, { backgroundColor: bgColor }]} />
       )}
-      <View style={s.cardBody}>
-        <Text style={s.cardTitle} numberOfLines={2}>{item.title}</Text>
-        {!!item.description && (
-          <Text style={s.cardDesc} numberOfLines={2}>{item.description}</Text>
-        )}
-        <View style={s.cardMeta}>
-          <Text style={s.cardCreator}>By {item.createdBy}</Text>
-          {roleCount > 0 && (
-            <View style={s.roleBadge}>
-              <Text style={s.roleBadgeText}>{roleCount} {roleCount === 1 ? 'role' : 'roles'}</Text>
-            </View>
-          )}
-        </View>
+      {/* Dark gradient overlay + title */}
+      <View style={s.tileOverlay}>
+        <Text style={s.tileTitle} numberOfLines={2}>{item.title}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -69,6 +60,8 @@ export default function BrowseScreen({ navigation }) {
         <FlatList
           data={experiences}
           keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={s.row}
           contentContainerStyle={s.list}
           ListEmptyComponent={
             <View style={s.empty}>
@@ -77,7 +70,7 @@ export default function BrowseScreen({ navigation }) {
             </View>
           }
           renderItem={({ item }) => (
-            <ExperienceCard
+            <ExperienceTile
               item={item}
               onPress={() => navigation.navigate('ExperienceDetail', { experience: item })}
             />
@@ -90,41 +83,36 @@ export default function BrowseScreen({ navigation }) {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  list: { padding: 16, paddingBottom: 40 },
+  list: { padding: PADDING, paddingBottom: 40 },
+  row: { gap: GAP, marginBottom: GAP },
 
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 16,
+  tile: {
+    width: TILE_SIZE,
+    height: TILE_SIZE,
+    borderRadius: radius.md,
     overflow: 'hidden',
+    backgroundColor: colors.card,
   },
-  poster: {
-    width: '100%',
-    height: 200,
+  tileImage: {
+    ...StyleSheet.absoluteFillObject,
   },
-  posterPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  posterInitial: {
-    fontSize: 72,
-    fontWeight: '900',
-    color: 'rgba(255,255,255,0.3)',
-  },
-  cardBody: { padding: 16 },
-  cardTitle: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 6 },
-  cardDesc: { fontSize: 14, color: colors.textMuted, lineHeight: 20, marginBottom: 10 },
-  cardMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cardCreator: { fontSize: 12, color: colors.textDim },
-  roleBadge: {
-    backgroundColor: colors.primaryDim,
-    borderRadius: radius.full,
+  tileOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingTop: 24,
+    paddingBottom: 10,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'flex-end',
   },
-  roleBadgeText: { fontSize: 11, color: '#fff', fontWeight: '600' },
+  tileTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+    lineHeight: 18,
+  },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: 8 },
