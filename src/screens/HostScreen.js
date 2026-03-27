@@ -207,12 +207,10 @@ export default function HostScreen({ navigation, route }) {
 
   async function handleShare() {
     const joinUrl = Linking.createURL('join', { queryParams: { prefillCode: roomCode } });
-    const title = session?.title ? `Join "${session.title}" on Birdhouse` : 'Join my Birdhouse session';
-    const message = session?.title
-      ? `Join "${session.title}" on Birdhouse!\nRoom code: ${roomCode}\n\nOpen directly: ${joinUrl}`
-      : `Join my Birdhouse session!\nRoom code: ${roomCode}\n\nOpen directly: ${joinUrl}`;
+    const experienceLine = session?.title ? `"${session.title}" on Birdhouse` : 'my Birdhouse session';
+    const message = `Join ${experienceLine}!\n\nRoom code: ${roomCode}\n\nTap to open: ${joinUrl}`;
     try {
-      await Share.share({ title, message, url: joinUrl });
+      await Share.share({ message });
     } catch (_) {}
   }
 
