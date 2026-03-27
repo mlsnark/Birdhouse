@@ -170,6 +170,11 @@ export default function HostScreen({ navigation, route }) {
       Alert.alert('Missing tracks', `${missing.length} participant(s) have no track URL.`);
       return;
     }
+    const anyWithTrack = Object.values(participants).some((p) => p.trackUrl?.trim());
+    if (!anyWithTrack) {
+      Alert.alert('No tracks assigned', 'At least one participant must have a track before starting.');
+      return;
+    }
     const notReady = Object.entries(participants).filter(([id, p]) => id !== deviceIdRef.current && !p.ready);
     if (notReady.length > 0) {
       Alert.alert('Not all ready', `${notReady.length} participant(s) still loading.`, [
