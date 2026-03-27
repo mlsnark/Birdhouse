@@ -17,7 +17,7 @@ import {
 import { colors, radius } from '../theme';
 import {
   generateRoomCode, createSession, subscribeSession,
-  setParticipantTrack, setParticipantRole, initiateStart, endSession,
+  setParticipantTrack, setParticipantRole, markReady, initiateStart, endSession,
 } from '../services/sessionService';
 import { getLibrary } from '../services/trackLibrary';
 import { getDeviceId } from '../utils/deviceId';
@@ -121,10 +121,14 @@ export default function HostScreen({ navigation, route }) {
       setRoomCode(code);
       setTrackDrafts({ [deviceId]: myTrackUrl });
 
-      // If host claimed a role, mark it taken
-      if (isExperienceMode && selectedRoleId) {
-        // Role is set via participant's roleId in lobby display
-        // We handle it as a trackUrl assignment already
+      // Load host's track and mark ready (mirrors what LobbyScreen does for participants).
+      if (myTrackUrl) {
+        audioPlayer.loadTrack(myTrackUrl)
+          .then(() => markReady(code, deviceId, true))
+          .catch(() => markReady(code, deviceId, false));
+      } else {
+        // No track (coordinator only) — host is always considered ready.
+        markReady(code, deviceId, true);
       }
 
       unsubscribeRef.current = subscribeSession(code, (data) => setSession(data));
