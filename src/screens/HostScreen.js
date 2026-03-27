@@ -149,7 +149,7 @@ export default function HostScreen({ navigation, route }) {
 
   async function handleStart() {
     const participants = session?.participants ?? {};
-    const missing = Object.entries(participants).filter(([, p]) => !p.trackUrl?.trim());
+    const missing = Object.entries(participants).filter(([, p]) => !p.isHost && !p.trackUrl?.trim());
     if (missing.length > 0) {
       Alert.alert('Missing tracks', `${missing.length} participant(s) have no track URL.`);
       return;
