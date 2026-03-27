@@ -116,6 +116,7 @@ export default function HostScreen({ navigation, route }) {
         roles,
         experience?.id ?? null,
         experience?.title ?? null,
+        isExperienceMode ? (selectedRoleId ?? null) : null,
       );
       setRoomCode(code);
       setTrackDrafts({ [deviceId]: myTrackUrl });
@@ -396,17 +397,17 @@ export default function HostScreen({ navigation, route }) {
             <View style={s.section}>
               <Text style={s.sectionTitle}>Roles</Text>
               {Object.entries(sessionRoles).map(([roleId, role]) => {
-                const claimedBy = role.takenBy ? participants[role.takenBy] : null;
+                const holders = participantList.filter(([, p]) => p.roleId === roleId);
                 return (
                   <View key={roleId} style={s.roleStatusCard}>
                     <View style={{ flex: 1 }}>
                       <Text style={s.roleStatusName}>{role.name}</Text>
                       <Text style={s.roleStatusUrl} numberOfLines={1}>{role.trackUrl}</Text>
                     </View>
-                    {claimedBy ? (
+                    {holders.length > 0 ? (
                       <View style={s.claimedBadge}>
-                        <View style={[s.readyDot, claimedBy.ready && s.readyDotActive]} />
-                        <Text style={s.claimedName}>{claimedBy.name}</Text>
+                        <View style={[s.readyDot, holders.some(([,p]) => p.ready) && s.readyDotActive]} />
+                        <Text style={s.claimedName}>{holders.map(([,p]) => p.name).join(', ')}</Text>
                       </View>
                     ) : (
                       <Text style={s.unclaimedText}>open</Text>

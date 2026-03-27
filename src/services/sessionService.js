@@ -55,7 +55,7 @@ export function generateRoomCode() {
  */
 export async function createSession(
   roomCode, hostId, hostName, hostTrackUrl = '',
-  roles = [], experienceId = null, experienceTitle = null,
+  roles = [], experienceId = null, experienceTitle = null, hostRoleId = null,
 ) {
   const sessionRef = ref(db, `sessions/${roomCode}`);
   const snap = await get(sessionRef);
@@ -63,7 +63,7 @@ export async function createSession(
 
   const rolesObj = {};
   roles.forEach((r) => {
-    rolesObj[r.id] = { name: r.name, trackUrl: r.trackUrl, takenBy: null };
+    rolesObj[r.id] = { name: r.name, trackUrl: r.trackUrl };
   });
 
   const sessionData = {
@@ -79,7 +79,7 @@ export async function createSession(
         trackUrl: hostTrackUrl,
         ready: false,
         isHost: true,
-        roleId: null,
+        roleId: hostRoleId,
       },
     },
   };
