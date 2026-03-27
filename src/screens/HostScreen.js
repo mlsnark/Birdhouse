@@ -468,7 +468,7 @@ export default function HostScreen({ navigation, route }) {
                         </TouchableOpacity>
                       )}
                     </View>
-                    <View style={[s.readyDot, participant.ready && s.readyDotActive]} />
+                    <View style={[s.readyDot, participant.ready && !!participant.trackUrl?.trim() && s.readyDotActive]} />
                   </View>
 
                   {!hasRole && (
@@ -493,7 +493,7 @@ export default function HostScreen({ navigation, route }) {
                     </View>
                   )}
 
-                  {participant.ready && <Text style={s.readyText}>Track loaded</Text>}
+                  {participant.ready && !!participant.trackUrl?.trim() && <Text style={s.readyText}>Track loaded</Text>}
                 </View>
               );
             })}
