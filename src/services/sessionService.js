@@ -111,7 +111,7 @@ export async function joinSession(roomCode, deviceId, name) {
   return session;
 }
 
-/** Join and claim a role atomically. */
+/** Join and select a role. Multiple participants may share the same role. */
 export async function joinSessionWithRole(roomCode, deviceId, name, roleId) {
   const snap = await get(ref(db, `sessions/${roomCode}`));
   if (!snap.exists()) throw new Error('Session not found.');
@@ -120,9 +120,6 @@ export async function joinSessionWithRole(roomCode, deviceId, name, roleId) {
 
   const role = session.roles?.[roleId];
   if (!role) throw new Error('Role not found.');
-  if (role.takenBy && role.takenBy !== deviceId) {
-    throw new Error('That role was just taken. Please pick another.');
-  }
 
   await update(ref(db, `sessions/${roomCode}`), {
     [`participants/${deviceId}/name`]: name,
@@ -130,12 +127,21 @@ export async function joinSessionWithRole(roomCode, deviceId, name, roleId) {
     [`participants/${deviceId}/ready`]: false,
     [`participants/${deviceId}/isHost`]: false,
     [`participants/${deviceId}/roleId`]: roleId,
-    [`roles/${roleId}/takenBy`]: deviceId,
   });
 
   onDisconnect(ref(db, `sessions/${roomCode}/participants/${deviceId}`)).remove();
-  onDisconnect(ref(db, `sessions/${roomCode}/roles/${roleId}/takenBy`)).set(null);
   return session;
+}
+
+/** Host reassigns a participant's role (and updates their track URL). */
+export async function setParticipantRole(roomCode, deviceId, roleId) {
+  const snap = await get(ref(db, `sessions/${roomCode}/roles/${roleId}`));
+  const role = snap.val();
+  await update(ref(db, `sessions/${roomCode}/participants/${deviceId}`), {
+    roleId,
+    trackUrl: role?.trackUrl ?? '',
+    ready: false,
+  });
 }
 
 /**

@@ -35,10 +35,7 @@
 
         "roles": {
           "$roleId": {
-            ".read": true,
-            "takenBy": {
-              ".write": "data.parent().parent().parent().child('status').val() === 'lobby'"
-            }
+            ".read": true
           }
         }
       }

@@ -17,7 +17,7 @@ import {
 import { colors, radius } from '../theme';
 import {
   generateRoomCode, createSession, subscribeSession,
-  setParticipantTrack, initiateStart, endSession,
+  setParticipantTrack, setParticipantRole, initiateStart, endSession,
 } from '../services/sessionService';
 import { getLibrary } from '../services/trackLibrary';
 import { getDeviceId } from '../utils/deviceId';
@@ -144,6 +144,22 @@ export default function HostScreen({ navigation, route }) {
     try { await setParticipantTrack(roomCode, deviceId, url); }
     catch (err) { Alert.alert('Error', err.message); }
   }, [roomCode, trackDrafts]);
+
+  // ── Role reassignment (host only) ──────────────────────────────────────────
+
+  function handleReassignRole(deviceId, currentRoleId) {
+    const roleOptions = Object.entries(session?.roles ?? {}).map(([roleId, role]) => ({
+      text: roleId === currentRoleId ? `${role.name} ✓` : role.name,
+      onPress: async () => {
+        try { await setParticipantRole(roomCode, deviceId, roleId); }
+        catch (err) { Alert.alert('Error', err.message); }
+      },
+    }));
+    Alert.alert('Reassign Role', 'Select a role for this participant:', [
+      ...roleOptions,
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }
 
   // ── Start ──────────────────────────────────────────────────────────────────
 
@@ -419,8 +435,14 @@ export default function HostScreen({ navigation, route }) {
                   <View style={s.participantHeader}>
                     <View>
                       <Text style={s.participantName}>{participant.name}{isMe ? '  (you)' : ''}</Text>
-                      {hasRole && sessionRoles[participant.roleId] && (
-                        <Text style={s.participantRole}>{sessionRoles[participant.roleId].name}</Text>
+                      {hasRoles && (
+                        <TouchableOpacity onPress={() => handleReassignRole(id, participant.roleId)}>
+                          <Text style={[s.participantRole, s.participantRoleTap]}>
+                            {participant.roleId && sessionRoles[participant.roleId]
+                              ? sessionRoles[participant.roleId].name
+                              : 'No role — tap to assign'}
+                          </Text>
+                        </TouchableOpacity>
                       )}
                     </View>
                     <View style={[s.readyDot, participant.ready && s.readyDotActive]} />
@@ -573,6 +595,7 @@ const s = StyleSheet.create({
   participantHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   participantName: { fontSize: 15, fontWeight: '600', color: colors.text },
   participantRole: { fontSize: 12, color: colors.primary, marginTop: 2 },
+  participantRoleTap: { textDecorationLine: 'underline' },
   readyDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.textDim },
   readyDotActive: { backgroundColor: colors.accent },
   readyText: { fontSize: 12, color: colors.accent, marginTop: 6 },

@@ -206,22 +206,26 @@ export default function JoinScreen({ navigation, route }) {
         <Text style={s.sub}>Select the part you will play in this session.</Text>
 
         {Object.entries(roles).map(([roleId, role]) => {
-          const isTaken = role.takenBy && role.takenBy !== deviceIdRef.current;
-          const takenByName = isTaken ? participants[role.takenBy]?.name : null;
           const isSelected = selectedRoleId === roleId;
+          const othersWithRole = Object.values(participants).filter(
+            (p) => p.roleId === roleId && p.name
+          );
 
           return (
             <TouchableOpacity
               key={roleId}
-              style={[s.roleCard, isSelected && s.roleCardSelected, isTaken && s.roleCardTaken]}
-              onPress={() => !isTaken && setSelectedRoleId(roleId)}
-              disabled={isTaken}
+              style={[s.roleCard, isSelected && s.roleCardSelected]}
+              onPress={() => setSelectedRoleId(roleId)}
               activeOpacity={0.8}
             >
               <View style={s.roleCardContent}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[s.roleName, isTaken && s.roleNameTaken]}>{role.name}</Text>
-                  {isTaken && <Text style={s.roleTakenText}>Taken by {takenByName ?? 'someone'}</Text>}
+                  <Text style={s.roleName}>{role.name}</Text>
+                  {othersWithRole.length > 0 && (
+                    <Text style={s.roleTakenText}>
+                      {othersWithRole.map((p) => p.name).join(', ')} also selected
+                    </Text>
+                  )}
                 </View>
                 {isSelected && <Text style={s.roleCheck}>✓</Text>}
               </View>
@@ -300,10 +304,8 @@ const s = StyleSheet.create({
     padding: 16, marginBottom: 10,
   },
   roleCardSelected: { borderColor: colors.primary, backgroundColor: colors.primaryDim },
-  roleCardTaken: { opacity: 0.4 },
   roleCardContent: { flexDirection: 'row', alignItems: 'center' },
   roleName: { fontSize: 17, fontWeight: '700', color: colors.text },
-  roleNameTaken: { color: colors.textMuted },
   roleTakenText: { fontSize: 12, color: colors.textDim, marginTop: 2 },
   roleCheck: { fontSize: 20, color: colors.accent, fontWeight: '700' },
 
