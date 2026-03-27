@@ -11,7 +11,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   SafeAreaView, Alert, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView, Image,
+  Platform, ScrollView, Image, Keyboard,
 } from 'react-native';
 import { colors, radius } from '../theme';
 import { fetchSession, joinSession, joinSessionWithRole, joinLate } from '../services/sessionService';
@@ -215,7 +215,7 @@ export default function JoinScreen({ navigation, route }) {
             <TouchableOpacity
               key={roleId}
               style={[s.roleCard, isSelected && s.roleCardSelected]}
-              onPress={() => setSelectedRoleId(roleId)}
+              onPress={() => { Keyboard.dismiss(); setSelectedRoleId(roleId); }}
               activeOpacity={0.8}
             >
               <View style={s.roleCardContent}>
