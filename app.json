@@ -2,6 +2,7 @@
   "expo": {
     "name": "Birdhouse",
     "slug": "birdhouse",
+    "scheme": "birdhouse",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",

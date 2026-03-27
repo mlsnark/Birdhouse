@@ -2,6 +2,7 @@ import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as Linking from 'expo-linking';
 
 import HomeScreen from './src/screens/HomeScreen';
 import BrowseScreen from './src/screens/BrowseScreen';
@@ -27,9 +28,21 @@ const NavTheme = {
   },
 };
 
+const linking = {
+  prefixes: [Linking.createURL('/'), 'birdhouse://'],
+  config: {
+    screens: {
+      Join: {
+        path: 'join',
+        parse: { prefillCode: (v) => String(v).toUpperCase() },
+      },
+    },
+  },
+};
+
 export default function App() {
   return (
-    <NavigationContainer theme={NavTheme}>
+    <NavigationContainer theme={NavTheme} linking={linking}>
       <StatusBar style="light" />
       <Stack.Navigator
         initialRouteName="Home"

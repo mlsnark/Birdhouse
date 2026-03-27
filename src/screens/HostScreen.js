@@ -14,6 +14,7 @@ import {
   StyleSheet, SafeAreaView, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform, Image, Share,
 } from 'react-native';
+import * as Linking from 'expo-linking';
 import { colors, radius } from '../theme';
 import {
   generateRoomCode, createSession, subscribeSession,
@@ -205,12 +206,13 @@ export default function HostScreen({ navigation, route }) {
   }
 
   async function handleShare() {
+    const joinUrl = Linking.createURL('join', { queryParams: { prefillCode: roomCode } });
     const title = session?.title ? `Join "${session.title}" on Birdhouse` : 'Join my Birdhouse session';
     const message = session?.title
-      ? `Join "${session.title}" on Birdhouse!\nRoom code: ${roomCode}`
-      : `Join my Birdhouse session!\nRoom code: ${roomCode}`;
+      ? `Join "${session.title}" on Birdhouse!\nRoom code: ${roomCode}\n\nOpen directly: ${joinUrl}`
+      : `Join my Birdhouse session!\nRoom code: ${roomCode}\n\nOpen directly: ${joinUrl}`;
     try {
-      await Share.share({ title, message });
+      await Share.share({ title, message, url: joinUrl });
     } catch (_) {}
   }
 
