@@ -62,6 +62,19 @@ export default function HostScreen({ navigation, route }) {
     return () => { if (unsubscribeRef.current) unsubscribeRef.current(); };
   }, []);
 
+  // Re-load host track whenever their trackUrl changes in the lobby (e.g. after role reassignment).
+  const loadedHostUrlRef = useRef(null);
+  useEffect(() => {
+    if (phase !== 'lobby' || !deviceIdRef.current) return;
+    const myEntry = session?.participants?.[deviceIdRef.current];
+    const url = myEntry?.trackUrl?.trim();
+    if (!url || url === loadedHostUrlRef.current) return;
+    loadedHostUrlRef.current = url;
+    audioPlayer.loadTrack(url)
+      .then(() => markReady(roomCode, deviceIdRef.current, true))
+      .catch(() => markReady(roomCode, deviceIdRef.current, false));
+  }, [session?.participants?.[deviceIdRef.current]?.trackUrl, phase]);
+
   // Navigate to Playback when session starts
   useEffect(() => {
     if (!session) return;
