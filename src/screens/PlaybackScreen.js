@@ -33,7 +33,7 @@ import { subscribeSession, pauseSession, resumeSession, endSession } from '../se
 const COUNTDOWN_SECONDS = 5;
 
 export default function PlaybackScreen({ navigation, route }) {
-  const { roomCode, deviceId, trackUrl, startAt, isHost, lateJoin } = route.params;
+  const { roomCode, deviceId, trackUrl, captionUrl, startAt, isHost, lateJoin } = route.params;
 
   const [phase, setPhase] = useState('loading'); // 'loading' | 'countdown' | 'playing' | 'paused'
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
@@ -42,6 +42,13 @@ export default function PlaybackScreen({ navigation, route }) {
   const tickRef = useRef(null);
   const playedRef = useRef(false);
   const prevStatusRef = useRef(null);
+  const startAtRef = useRef(startAt);
+
+  // Captions
+  const captionsRef = useRef([]);
+  const [activeLyric, setActiveLyric] = useState(null);
+  const [activeInstruction, setActiveInstruction] = useState(null);
+  const captionTickRef = useRef(null);
 
   // ── Setup ──────────────────────────────────────────────────────────────────
 
@@ -103,12 +110,15 @@ export default function PlaybackScreen({ navigation, route }) {
 
       if (data.status === 'paused' && prev !== 'paused') {
         clearInterval(tickRef.current);
+        clearInterval(captionTickRef.current);
         audioPlayer.pause();
         setPhase('paused');
       } else if (data.status === 'starting' && prev === 'paused') {
+        startAtRef.current = data.startAt;
         const offsetMs = Math.max(0, clockSync.now() - data.startAt);
         audioPlayer.playFromOffset(offsetMs);
         setPhase('playing');
+        startCaptionTick();
       }
     });
     return unsub;
@@ -130,6 +140,35 @@ export default function PlaybackScreen({ navigation, route }) {
       }
     }, 100);
   }
+
+  // ── Captions ───────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!captionUrl) return;
+    fetch(captionUrl)
+      .then((r) => r.json())
+      .then((data) => { captionsRef.current = data; })
+      .catch(() => {});
+  }, [captionUrl]);
+
+  function startCaptionTick() {
+    clearInterval(captionTickRef.current);
+    captionTickRef.current = setInterval(() => {
+      const pos = Math.max(0, clockSync.now() - startAtRef.current);
+      const cues = captionsRef.current;
+      const findActive = (type) => cues.find((c) =>
+        c.type === type && c.start <= pos && (c.end == null || c.end >= pos)
+      );
+      setActiveLyric(findActive('lyric')?.text ?? null);
+      setActiveInstruction(findActive('instruction')?.text ?? null);
+    }, 100);
+  }
+
+  useEffect(() => {
+    if (phase === 'playing') startCaptionTick();
+    if (phase === 'paused') clearInterval(captionTickRef.current);
+    return () => clearInterval(captionTickRef.current);
+  }, [phase]);
 
   // ── Pause / Resume (host only) ─────────────────────────────────────────────
 
@@ -172,6 +211,12 @@ export default function PlaybackScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Instruction caption — top */}
+      {!!activeInstruction && (
+        <View style={styles.instructionBanner}>
+          <Text style={styles.instructionText}>{activeInstruction}</Text>
+        </View>
+      )}
       <View style={styles.container}>
         {/* Status text */}
         <Text style={styles.statusText}>
@@ -229,6 +274,13 @@ export default function PlaybackScreen({ navigation, route }) {
           <TouchableOpacity style={styles.resumeBtn} onPress={handleResume}>
             <Text style={styles.resumeBtnText}>▶  Resume</Text>
           </TouchableOpacity>
+        )}
+
+        {/* Lyric caption — bottom */}
+        {!!activeLyric && (
+          <View style={styles.lyricBanner}>
+            <Text style={styles.lyricText}>{activeLyric}</Text>
+          </View>
         )}
 
         {/* Stop button */}
@@ -354,6 +406,27 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 3,
+  },
+
+  instructionBanner: {
+    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    paddingHorizontal: 24, paddingVertical: 16,
+    alignItems: 'center',
+  },
+  instructionText: {
+    color: '#FCD34D', fontSize: 18, fontWeight: '600',
+    textAlign: 'center', lineHeight: 26,
+  },
+  lyricBanner: {
+    alignSelf: 'stretch', marginBottom: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 10, paddingHorizontal: 20, paddingVertical: 14,
+    alignItems: 'center',
+  },
+  lyricText: {
+    color: '#fff', fontSize: 20, fontWeight: '500',
+    textAlign: 'center', lineHeight: 28,
   },
 
   pauseBtn: {

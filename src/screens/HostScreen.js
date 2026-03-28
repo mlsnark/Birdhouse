@@ -84,6 +84,7 @@ export default function HostScreen({ navigation, route }) {
       navigation.replace('Playback', {
         roomCode, deviceId: deviceIdRef.current,
         trackUrl: myEntry?.trackUrl ?? '',
+        captionUrl: myEntry?.roleId ? (session.roles?.[myEntry.roleId]?.captionUrl ?? null) : null,
         startAt: session.startAt, isHost: true,
       });
     }

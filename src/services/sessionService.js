@@ -63,7 +63,7 @@ export async function createSession(
 
   const rolesObj = {};
   roles.forEach((r) => {
-    rolesObj[r.id] = { name: r.name, trackUrl: r.trackUrl };
+    rolesObj[r.id] = { name: r.name, trackUrl: r.trackUrl, captionUrl: r.captionUrl ?? null };
   });
 
   const sessionData = {

@@ -19,6 +19,7 @@ import { uploadImage } from '../services/storageService';
 import { getLibrary } from '../services/trackLibrary';
 import { getDeviceId } from '../utils/deviceId';
 import LibraryPickerModal from '../components/LibraryPickerModal';
+import CaptionEditorModal from '../components/CaptionEditorModal';
 
 const CREATOR_NAME_KEY = '@birdhouse_creator_name';
 
@@ -34,8 +35,11 @@ export default function CreateExperienceScreen({ navigation, route }) {
   const [imageUrl, setImageUrl] = useState(existing?.imageUrl ?? null); // existing remote URL
   const [roles, setRoles] = useState(() => {
     if (!existing?.roles) return [];
-    return Object.entries(existing.roles).map(([id, r]) => ({ id, name: r.name, trackUrl: r.trackUrl }));
+    return Object.entries(existing.roles).map(([id, r]) => ({
+      id, name: r.name, trackUrl: r.trackUrl, captionUrl: r.captionUrl ?? null,
+    }));
   });
+  const [captionModal, setCaptionModal] = useState({ visible: false, roleId: null });
 
   const [publishing, setPublishing] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -80,7 +84,7 @@ export default function CreateExperienceScreen({ navigation, route }) {
   // ── Roles ──────────────────────────────────────────────────────────────────
 
   function addRole() {
-    setRoles((r) => [...r, { id: `${Date.now()}`, name: '', trackUrl: '' }]);
+    setRoles((r) => [...r, { id: `${Date.now()}`, name: '', trackUrl: '', captionUrl: null }]);
   }
 
   function updateRole(id, patch) {
@@ -274,6 +278,14 @@ export default function CreateExperienceScreen({ navigation, route }) {
                   <Text style={s.libraryBtnText}>Library</Text>
                 </TouchableOpacity>
               </View>
+              <TouchableOpacity
+                style={s.captionBtn}
+                onPress={() => setCaptionModal({ visible: true, roleId: role.id })}
+              >
+                <Text style={s.captionBtnText}>
+                  {role.captionUrl ? '✎ Edit Captions' : '+ Add Captions'}
+                </Text>
+              </TouchableOpacity>
             </View>
           ))}
 
@@ -309,6 +321,20 @@ export default function CreateExperienceScreen({ navigation, route }) {
         onClose={() => setLibraryModal({ visible: false, onSelect: null })}
         onLibraryChange={refreshLibrary}
       />
+
+      {(() => {
+        const activeRole = roles.find((r) => r.id === captionModal.roleId);
+        return (
+          <CaptionEditorModal
+            visible={captionModal.visible}
+            captionUrl={activeRole?.captionUrl ?? null}
+            experienceId={existing?.id ?? `new_${Date.now()}`}
+            roleId={captionModal.roleId}
+            onSave={(url) => updateRole(captionModal.roleId, { captionUrl: url })}
+            onClose={() => setCaptionModal({ visible: false, roleId: null })}
+          />
+        );
+      })()}
     </SafeAreaView>
   );
 }
@@ -383,6 +409,8 @@ const s = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 10, color: colors.text, fontSize: 13,
   },
   libraryBtn: { backgroundColor: colors.primaryDim, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10 },
+  captionBtn: { marginTop: 8, alignSelf: 'flex-start' },
+  captionBtnText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
   libraryBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
 
   publishBtn: {

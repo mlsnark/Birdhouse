@@ -91,6 +91,7 @@ export default function LobbyScreen({ navigation, route }) {
         roomCode,
         deviceId,
         trackUrl: me?.trackUrl ?? '',
+        captionUrl: me?.roleId ? (session.roles?.[me.roleId]?.captionUrl ?? null) : null,
         startAt: session.startAt,
         isHost: false,
       });
