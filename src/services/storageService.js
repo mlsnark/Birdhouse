@@ -42,6 +42,10 @@ export function uploadTrack(localUri, filename, onProgress) {
  * @param {string} experienceId
  * @param {function} onProgress  - called with 0–1
  */
+export function uploadImage(localUri, experienceId, onProgress) {
+  return uploadFile(localUri, `images/${experienceId}_${Date.now()}.jpg`, onProgress);
+}
+
 /**
  * Upload a caption JSON file. Returns a public download URL.
  * @param {string} jsonText  - stringified JSON

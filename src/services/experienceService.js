@@ -20,7 +20,12 @@ import { db } from '../config/firebase';
 function rolesToObj(roles = []) {
   const obj = {};
   roles.forEach((r) => {
-    obj[r.id] = { name: r.name, trackUrl: r.trackUrl };
+    obj[r.id] = {
+      name: r.name,
+      trackUrl: r.trackUrl,
+      captionUrl: r.captionUrl ?? null,
+      maxParticipants: r.maxParticipants ?? 1,
+    };
   });
   return Object.keys(obj).length > 0 ? obj : null;
 }
