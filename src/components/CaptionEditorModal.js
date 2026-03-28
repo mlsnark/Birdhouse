@@ -2,9 +2,9 @@
  * CaptionEditorModal — edit timed caption cues for a role.
  *
  * Format: JSON array of cue objects:
- *   { "start": <ms>, "end": <ms>, "type": "lyric"|"instruction", "text": "..." }
+ *   { "start": <ms>, "end": <ms>, "type": "repeat"|"instruction", "text": "..." }
  *
- * "lyric"       → spoken text, shown at the bottom in white
+ * "repeat"       → spoken text, shown at the bottom in white
  * "instruction" → stage directions, shown at the top in amber
  *
  * "end" is optional; if omitted the cue shows until the next one starts.
@@ -20,9 +20,9 @@ import { colors, radius } from '../theme';
 
 const EXAMPLE = JSON.stringify([
   { start: 0,    end: 4000,  type: 'instruction', text: 'Sit down. Close your eyes.' },
-  { start: 4000, end: 9000,  type: 'lyric',       text: 'The way one once called a number to hear the time.' },
+  { start: 4000, end: 9000,  type: 'repeat',       text: 'The way one once called a number to hear the time.' },
   { start: 9500, end: 13000, type: 'instruction', text: 'Look slowly to the left.' },
-  { start: 13000,end: 18000, type: 'lyric',       text: "You don't attend it. You access it." },
+  { start: 13000,end: 18000, type: 'repeat',       text: "You don't attend it. You access it." },
 ], null, 2);
 
 function validate(text) {
@@ -31,8 +31,8 @@ function validate(text) {
   parsed.forEach((cue, i) => {
     if (typeof cue.start !== 'number') throw new Error(`Cue ${i}: "start" must be a number (ms)`);
     if (typeof cue.text !== 'string')  throw new Error(`Cue ${i}: "text" must be a string`);
-    if (cue.type !== 'lyric' && cue.type !== 'instruction')
-      throw new Error(`Cue ${i}: "type" must be "lyric" or "instruction"`);
+    if (cue.type !== 'repeat' && cue.type !== 'instruction')
+      throw new Error(`Cue ${i}: "type" must be "repeat" or "instruction"`);
   });
   return parsed;
 }
@@ -116,12 +116,12 @@ export default function CaptionEditorModal({
             <Text style={s.guideTitle}>Format guide</Text>
             <Text style={s.guideText}>
               Each cue needs <Text style={s.code}>start</Text> (ms from track start),{' '}
-              <Text style={s.code}>type</Text> (<Text style={s.lyricBadge}>lyric</Text> or{' '}
+              <Text style={s.code}>type</Text> (<Text style={s.repeatBadge}>repeat</Text> or{' '}
               <Text style={s.instrBadge}>instruction</Text>), and <Text style={s.code}>text</Text>.{'\n'}
               <Text style={s.code}>end</Text> is optional.
             </Text>
             <Text style={s.guideText}>
-              <Text style={s.lyricBadge}>lyric</Text> — spoken words, shown at <Text style={{ color: '#fff' }}>bottom</Text>{'\n'}
+              <Text style={s.repeatBadge}>repeat</Text> — spoken words, shown at <Text style={{ color: '#fff' }}>bottom</Text>{'\n'}
               <Text style={s.instrBadge}>instruction</Text> — stage directions, shown at <Text style={{ color: '#fff' }}>top</Text>
             </Text>
           </View>
@@ -186,7 +186,7 @@ const s = StyleSheet.create({
   guideTitle: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
   guideText: { fontSize: 13, color: colors.textMuted, lineHeight: 20, marginBottom: 4 },
   code: { fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', color: colors.text },
-  lyricBadge: { color: '#fff', fontWeight: '700' },
+  repeatBadge: { color: '#fff', fontWeight: '700' },
   instrBadge: { color: '#FCD34D', fontWeight: '700' },
 
   exampleBtn: { alignSelf: 'flex-start', marginBottom: 16 },

@@ -46,7 +46,7 @@ export default function PlaybackScreen({ navigation, route }) {
 
   // Captions
   const captionsRef = useRef([]);
-  const [activeLyric, setActiveLyric] = useState(null);
+  const [activeRepeat, setActiveRepeat] = useState(null);
   const [activeInstruction, setActiveInstruction] = useState(null);
   const captionTickRef = useRef(null);
 
@@ -159,7 +159,7 @@ export default function PlaybackScreen({ navigation, route }) {
       const findActive = (type) => cues.find((c) =>
         c.type === type && c.start <= pos && (c.end == null || c.end >= pos)
       );
-      setActiveLyric(findActive('lyric')?.text ?? null);
+      setActiveRepeat(findActive('repeat')?.text ?? null);
       setActiveInstruction(findActive('instruction')?.text ?? null);
     }, 100);
   }
@@ -276,10 +276,10 @@ export default function PlaybackScreen({ navigation, route }) {
           </TouchableOpacity>
         )}
 
-        {/* Lyric caption — bottom */}
-        {!!activeLyric && (
-          <View style={styles.lyricBanner}>
-            <Text style={styles.lyricText}>{activeLyric}</Text>
+        {/* Repeat caption — bottom */}
+        {!!activeRepeat && (
+          <View style={styles.repeatBanner}>
+            <Text style={styles.repeatText}>{activeRepeat}</Text>
           </View>
         )}
 
@@ -418,13 +418,13 @@ const styles = StyleSheet.create({
     color: '#FCD34D', fontSize: 18, fontWeight: '600',
     textAlign: 'center', lineHeight: 26,
   },
-  lyricBanner: {
+  repeatBanner: {
     alignSelf: 'stretch', marginBottom: 16,
     backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 10, paddingHorizontal: 20, paddingVertical: 14,
     alignItems: 'center',
   },
-  lyricText: {
+  repeatText: {
     color: '#fff', fontSize: 20, fontWeight: '500',
     textAlign: 'center', lineHeight: 28,
   },
