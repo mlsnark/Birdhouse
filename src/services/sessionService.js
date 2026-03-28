@@ -63,7 +63,12 @@ export async function createSession(
 
   const rolesObj = {};
   roles.forEach((r) => {
-    rolesObj[r.id] = { name: r.name, trackUrl: r.trackUrl, captionUrl: r.captionUrl ?? null };
+    rolesObj[r.id] = {
+      name: r.name,
+      trackUrl: r.trackUrl,
+      captionUrl: r.captionUrl ?? null,
+      maxParticipants: r.maxParticipants ?? 1,
+    };
   });
 
   const sessionData = {
@@ -120,6 +125,13 @@ export async function joinSessionWithRole(roomCode, deviceId, name, roleId) {
 
   const role = session.roles?.[roleId];
   if (!role) throw new Error('Role not found.');
+
+  // Enforce capacity if maxParticipants is set
+  const max = role.maxParticipants ?? 1;
+  if (max !== null && max > 0) {
+    const taken = Object.values(session.participants ?? {}).filter((p) => p.roleId === roleId).length;
+    if (taken >= max) throw new Error(`This role is full (${max} participant${max === 1 ? '' : 's'} max).`);
+  }
 
   await update(ref(db, `sessions/${roomCode}`), {
     [`participants/${deviceId}/name`]: name,

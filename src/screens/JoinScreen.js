@@ -207,26 +207,31 @@ export default function JoinScreen({ navigation, route }) {
 
         {Object.entries(roles).map(([roleId, role]) => {
           const isSelected = selectedRoleId === roleId;
-          const othersWithRole = Object.values(participants).filter(
-            (p) => p.roleId === roleId && p.name
-          );
+          const othersWithRole = Object.values(participants).filter((p) => p.roleId === roleId && p.name);
+          const max = role.maxParticipants ?? 1;
+          const isFull = max !== null && max > 0 && othersWithRole.length >= max;
+          const capacityLabel = max === null || max === 0
+            ? `${othersWithRole.length} joined`
+            : `${othersWithRole.length} / ${max}`;
 
           return (
             <TouchableOpacity
               key={roleId}
-              style={[s.roleCard, isSelected && s.roleCardSelected]}
-              onPress={() => { Keyboard.dismiss(); setSelectedRoleId(roleId); }}
-              activeOpacity={0.8}
+              style={[s.roleCard, isSelected && s.roleCardSelected, isFull && s.roleCardFull]}
+              onPress={() => { if (!isFull) { Keyboard.dismiss(); setSelectedRoleId(roleId); } }}
+              activeOpacity={isFull ? 1 : 0.8}
             >
               <View style={s.roleCardContent}>
                 <View style={{ flex: 1 }}>
-                  <Text style={s.roleName}>{role.name}</Text>
-                  {othersWithRole.length > 0 && (
+                  <Text style={[s.roleName, isFull && s.roleNameFull]}>{role.name}</Text>
+                  {othersWithRole.length > 0 && !isFull && (
                     <Text style={s.roleTakenText}>
                       {othersWithRole.map((p) => p.name).join(', ')} also selected
                     </Text>
                   )}
+                  {isFull && <Text style={s.roleFullText}>Full</Text>}
                 </View>
+                <Text style={[s.capacityBadge, isFull && s.capacityBadgeFull]}>{capacityLabel}</Text>
                 {isSelected && <Text style={s.roleCheck}>✓</Text>}
               </View>
             </TouchableOpacity>
@@ -304,9 +309,14 @@ const s = StyleSheet.create({
     padding: 16, marginBottom: 10,
   },
   roleCardSelected: { borderColor: colors.primary, backgroundColor: colors.primaryDim },
-  roleCardContent: { flexDirection: 'row', alignItems: 'center' },
+  roleCardFull: { opacity: 0.45 },
+  roleCardContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   roleName: { fontSize: 17, fontWeight: '700', color: colors.text },
+  roleNameFull: { color: colors.textMuted },
   roleTakenText: { fontSize: 12, color: colors.textDim, marginTop: 2 },
+  roleFullText: { fontSize: 12, color: colors.danger, marginTop: 2, fontWeight: '600' },
+  capacityBadge: { fontSize: 12, color: colors.textDim, fontWeight: '500' },
+  capacityBadgeFull: { color: colors.danger },
   roleCheck: { fontSize: 20, color: colors.accent, fontWeight: '700' },
 
   backBtn: { marginTop: 16, alignItems: 'center', paddingVertical: 10 },

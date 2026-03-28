@@ -37,6 +37,7 @@ export default function CreateExperienceScreen({ navigation, route }) {
     if (!existing?.roles) return [];
     return Object.entries(existing.roles).map(([id, r]) => ({
       id, name: r.name, trackUrl: r.trackUrl, captionUrl: r.captionUrl ?? null,
+      maxParticipants: r.maxParticipants ?? 1,
     }));
   });
   const [captionModal, setCaptionModal] = useState({ visible: false, roleId: null });
@@ -84,7 +85,7 @@ export default function CreateExperienceScreen({ navigation, route }) {
   // ── Roles ──────────────────────────────────────────────────────────────────
 
   function addRole() {
-    setRoles((r) => [...r, { id: `${Date.now()}`, name: '', trackUrl: '', captionUrl: null }]);
+    setRoles((r) => [...r, { id: `${Date.now()}`, name: '', trackUrl: '', captionUrl: null, maxParticipants: 1 }]);
   }
 
   function updateRole(id, patch) {
@@ -286,6 +287,40 @@ export default function CreateExperienceScreen({ navigation, route }) {
                   {role.captionUrl ? '✎ Edit Captions' : '+ Add Captions'}
                 </Text>
               </TouchableOpacity>
+
+              {/* Capacity */}
+              <View style={s.capacityRow}>
+                <Text style={s.capacityLabel}>Max participants</Text>
+                <View style={s.capacityStepper}>
+                  <TouchableOpacity
+                    style={s.stepBtn}
+                    onPress={() => {
+                      const cur = role.maxParticipants;
+                      if (cur === null) updateRole(role.id, { maxParticipants: 999 });
+                      else if (cur > 1) updateRole(role.id, { maxParticipants: cur - 1 });
+                    }}
+                  >
+                    <Text style={s.stepBtnText}>−</Text>
+                  </TouchableOpacity>
+                  <Text style={s.capacityValue}>
+                    {role.maxParticipants === null ? '∞' : role.maxParticipants}
+                  </Text>
+                  <TouchableOpacity
+                    style={s.stepBtn}
+                    onPress={() => {
+                      const cur = role.maxParticipants;
+                      if (cur === null) return;
+                      if (cur >= 999) updateRole(role.id, { maxParticipants: null });
+                      else updateRole(role.id, { maxParticipants: cur + 1 });
+                    }}
+                  >
+                    <Text style={s.stepBtnText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={s.capacityHint}>
+                  {role.maxParticipants === null ? 'Unlimited' : role.maxParticipants === 1 ? 'Unique role' : `Up to ${role.maxParticipants}`}
+                </Text>
+              </View>
             </View>
           ))}
 
@@ -411,6 +446,17 @@ const s = StyleSheet.create({
   libraryBtn: { backgroundColor: colors.primaryDim, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10 },
   captionBtn: { marginTop: 8, alignSelf: 'flex-start' },
   captionBtnText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
+  capacityRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 10 },
+  capacityLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '600', flex: 1 },
+  capacityStepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  stepBtn: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  stepBtnText: { color: colors.text, fontSize: 18, fontWeight: '600', lineHeight: 22 },
+  capacityValue: { fontSize: 16, fontWeight: '700', color: colors.text, minWidth: 32, textAlign: 'center' },
+  capacityHint: { fontSize: 11, color: colors.textDim, fontStyle: 'italic' },
   libraryBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
 
   publishBtn: {
