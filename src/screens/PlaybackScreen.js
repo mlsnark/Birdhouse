@@ -28,19 +28,20 @@ import {
 import { colors } from '../theme';
 import clockSync from '../services/clockSync';
 import audioPlayer from '../services/audioPlayer';
-import { endSession } from '../services/sessionService';
+import { subscribeSession, pauseSession, resumeSession, endSession } from '../services/sessionService';
 
 const COUNTDOWN_SECONDS = 5;
 
 export default function PlaybackScreen({ navigation, route }) {
   const { roomCode, deviceId, trackUrl, startAt, isHost, lateJoin } = route.params;
 
-  const [phase, setPhase] = useState('loading'); // 'loading' | 'countdown' | 'playing' | 'done'
+  const [phase, setPhase] = useState('loading'); // 'loading' | 'countdown' | 'playing' | 'paused'
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
   const [errorMsg, setErrorMsg] = useState(null);
 
   const tickRef = useRef(null);
   const playedRef = useRef(false);
+  const prevStatusRef = useRef(null);
 
   // ── Setup ──────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,28 @@ export default function PlaybackScreen({ navigation, route }) {
     };
   }, []);
 
+  // ── Session subscription (pause / resume / ended) ──────────────────────────
+
+  useEffect(() => {
+    const unsub = subscribeSession(roomCode, (data) => {
+      if (!data) { navigation.navigate('Home'); return; }
+
+      const prev = prevStatusRef.current;
+      prevStatusRef.current = data.status;
+
+      if (data.status === 'paused' && prev !== 'paused') {
+        clearInterval(tickRef.current);
+        audioPlayer.pause();
+        setPhase('paused');
+      } else if (data.status === 'starting' && prev === 'paused') {
+        const offsetMs = Math.max(0, clockSync.now() - data.startAt);
+        audioPlayer.playFromOffset(offsetMs);
+        setPhase('playing');
+      }
+    });
+    return unsub;
+  }, [roomCode]);
+
   // ── Countdown ticker ───────────────────────────────────────────────────────
 
   function startCountdown() {
@@ -106,6 +129,16 @@ export default function PlaybackScreen({ navigation, route }) {
         setPhase('playing');
       }
     }, 100);
+  }
+
+  // ── Pause / Resume (host only) ─────────────────────────────────────────────
+
+  async function handlePause() {
+    try { await pauseSession(roomCode); } catch (err) { Alert.alert('Error', err.message); }
+  }
+
+  async function handleResume() {
+    try { await resumeSession(roomCode); } catch (err) { Alert.alert('Error', err.message); }
   }
 
   // ── Stop / leave ───────────────────────────────────────────────────────────
@@ -135,39 +168,35 @@ export default function PlaybackScreen({ navigation, route }) {
 
   const isCountdown = phase === 'countdown';
   const isPlaying = phase === 'playing';
+  const isPaused = phase === 'paused';
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         {/* Status text */}
         <Text style={styles.statusText}>
-          {isCountdown
-            ? 'Starting in…'
-            : isPlaying
-            ? 'Now playing'
+          {isCountdown ? 'Starting in…'
+            : isPlaying ? 'Now playing'
+            : isPaused ? 'Paused'
             : 'Preparing…'}
         </Text>
 
         {/* Main display */}
         <View style={styles.centerDisplay}>
           {isCountdown && (
-            <Text
-              style={[
-                styles.countdown,
-                secondsLeft === 1 && styles.countdownFinal,
-              ]}
-            >
+            <Text style={[styles.countdown, secondsLeft === 1 && styles.countdownFinal]}>
               {secondsLeft}
             </Text>
           )}
-
           {isPlaying && (
             <View style={styles.playingDisplay}>
               <Text style={styles.playingIcon}>▶</Text>
               <PulsingDots />
             </View>
           )}
-
+          {isPaused && (
+            <Text style={styles.pausedIcon}>⏸</Text>
+          )}
           {phase === 'loading' && (
             <Text style={styles.loadingText}>Loading…</Text>
           )}
@@ -190,8 +219,20 @@ export default function PlaybackScreen({ navigation, route }) {
           <Text style={styles.roomChipText}>{roomCode}</Text>
         </View>
 
+        {/* Host controls */}
+        {isHost && isPlaying && (
+          <TouchableOpacity style={styles.pauseBtn} onPress={handlePause}>
+            <Text style={styles.pauseBtnText}>⏸  Pause</Text>
+          </TouchableOpacity>
+        )}
+        {isHost && isPaused && (
+          <TouchableOpacity style={styles.resumeBtn} onPress={handleResume}>
+            <Text style={styles.resumeBtnText}>▶  Resume</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Stop button */}
-        {(isCountdown || isPlaying) && (
+        {(isCountdown || isPlaying || isPaused) && (
           <TouchableOpacity style={styles.stopBtn} onPress={handleStop}>
             <Text style={styles.stopBtnText}>
               {isHost ? 'Stop & End Session' : 'Leave'}
@@ -282,10 +323,8 @@ const styles = StyleSheet.create({
   },
 
   playingDisplay: { alignItems: 'center' },
-  playingIcon: {
-    fontSize: 80,
-    color: colors.accent,
-  },
+  playingIcon: { fontSize: 80, color: colors.accent },
+  pausedIcon: { fontSize: 80, color: colors.textMuted },
   loadingText: {
     fontSize: 24,
     color: colors.textMuted,
@@ -317,6 +356,22 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
   },
 
+  pauseBtn: {
+    backgroundColor: colors.primaryDim,
+    borderRadius: 999,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    marginBottom: 12,
+  },
+  pauseBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
+  resumeBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    marginBottom: 12,
+  },
+  resumeBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
   stopBtn: {
     borderWidth: 1,
     borderColor: colors.danger,
@@ -325,9 +380,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     marginBottom: 8,
   },
-  stopBtnText: {
-    color: colors.danger,
-    fontWeight: '600',
-    fontSize: 15,
-  },
+  stopBtnText: { color: colors.danger, fontWeight: '600', fontSize: 15 },
 });

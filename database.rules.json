@@ -25,6 +25,9 @@
         "startAt": {
           ".write": "data.parent().exists()"
         },
+        "pausedAt": {
+          ".write": "data.parent().exists()"
+        },
 
         "participants": {
           "$deviceId": {

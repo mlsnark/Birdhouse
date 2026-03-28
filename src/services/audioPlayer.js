@@ -96,6 +96,14 @@ class AudioPlayerService {
     attempt();
   }
 
+  async pause() {
+    this._clearTimers();
+    this._isScheduled = false;
+    if (this.sound) {
+      try { await this.sound.pauseAsync(); } catch (_) {}
+    }
+  }
+
   /**
    * For late joiners: load, seek to offsetMs, and play immediately.
    * The sound must already be loaded via loadTrack().

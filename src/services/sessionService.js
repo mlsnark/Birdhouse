@@ -181,6 +181,28 @@ export async function initiateStart(roomCode, countdownSeconds = 5) {
   return startAt;
 }
 
+/** Pause playback for all participants. Records server time of pause. */
+export async function pauseSession(roomCode) {
+  const pausedAt = clockSync.now();
+  await update(ref(db, `sessions/${roomCode}`), { status: 'paused', pausedAt });
+}
+
+/**
+ * Resume playback from where it was paused.
+ * Adjusts startAt so each device can compute the correct seek offset.
+ */
+export async function resumeSession(roomCode) {
+  const snap = await get(ref(db, `sessions/${roomCode}`));
+  const session = snap.val();
+  const pausedPosition = session.pausedAt - session.startAt;
+  const newStartAt = clockSync.now() - pausedPosition;
+  await update(ref(db, `sessions/${roomCode}`), {
+    status: 'starting',
+    startAt: newStartAt,
+    pausedAt: null,
+  });
+}
+
 export function endSession(roomCode) {
   return remove(ref(db, `sessions/${roomCode}`));
 }
