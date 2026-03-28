@@ -63,6 +63,14 @@ export async function getExperience(id) {
   return { id, ...snap.val() };
 }
 
+/** Subscribe to a single experience by ID. Returns unsubscribe fn. */
+export function subscribeExperience(id, callback) {
+  return onValue(ref(db, `experiences/${id}`), (snap) => {
+    if (!snap.exists()) { callback(null); return; }
+    callback({ id, ...snap.val() });
+  });
+}
+
 /** Update an existing experience (creator only). */
 export async function updateExperience(id, { title, description, imageUrl, roles }) {
   await update(ref(db, `experiences/${id}`), {

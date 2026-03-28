@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { colors, radius } from '../theme';
 import { getDeviceId } from '../utils/deviceId';
+import { subscribeExperience } from '../services/experienceService';
 
 const POSTER_COLORS = ['#4C1D95', '#065F46', '#1E3A5F', '#7C2D12', '#374151', '#713F12'];
 function posterColor(title = '') {
@@ -22,11 +23,20 @@ function posterColor(title = '') {
 }
 
 export default function ExperienceDetailScreen({ navigation, route }) {
-  const experience = route.params?.experience;
+  const initial = route.params?.experience;
+  const [experience, setExperience] = useState(initial);
   const [isCreator, setIsCreator] = useState(false);
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomCode, setRoomCode] = useState('');
   const scrollRef = useRef(null);
+
+  // Subscribe to live experience data so edits (e.g. captions) are reflected immediately
+  useEffect(() => {
+    if (!initial?.id) return;
+    return subscribeExperience(initial.id, (updated) => {
+      if (updated) setExperience(updated);
+    });
+  }, [initial?.id]);
 
   // Scroll to bottom once keyboard is fully open
   useEffect(() => {
