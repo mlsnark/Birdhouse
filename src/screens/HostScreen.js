@@ -36,7 +36,7 @@ export default function HostScreen({ navigation, route }) {
   const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [roles, setRoles] = useState(() => {
     if (!experience?.roles) return [];
-    return Object.entries(experience.roles).map(([id, r]) => ({ id, name: r.name, trackUrl: r.trackUrl }));
+    return Object.entries(experience.roles).map(([id, r]) => ({ id, name: r.name, trackUrl: r.trackUrl, captionUrl: r.captionUrl ?? null, maxParticipants: r.maxParticipants ?? 1 }));
   });
 
   // Lobby state
