@@ -418,8 +418,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(252,211,77,0.3)',
   },
   instructionText: {
-    color: '#FCD34D', fontSize: 20, fontWeight: '600',
-    textAlign: 'center', lineHeight: 28,
+    color: '#FCD34D', fontSize: 18, fontWeight: '600',
+    textAlign: 'center', lineHeight: 26,
   },
   repeatBanner: {
     alignSelf: 'stretch', marginBottom: 12,
@@ -429,8 +429,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
   },
   repeatText: {
-    color: '#fff', fontSize: 20, fontWeight: '500',
-    textAlign: 'center', lineHeight: 28,
+    color: '#fff', fontSize: 18, fontWeight: '500',
+    textAlign: 'center', lineHeight: 26,
   },
 
   pauseBtn: {
