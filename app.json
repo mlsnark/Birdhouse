@@ -14,6 +14,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.birdhouse.app",
+      "buildNumber": "1",
       "infoPlist": {
         "UIBackgroundModes": ["audio"],
         "NSMicrophoneUsageDescription": "Birdhouse plays synchronized audio tracks."
@@ -24,7 +25,7 @@
         "backgroundColor": "#0a0a0a"
       },
       "package": "com.birdhouse.app",
-      "permissions": ["FOREGROUND_SERVICE", "WAKE_LOCK"]
+      "permissions": ["FOREGROUND_SERVICE", "WAKE_LOCK", "android.permission.MODIFY_AUDIO_SETTINGS"]
     },
     "plugins": [
       [
@@ -33,6 +34,11 @@
           "microphonePermission": false
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d62db0a4-a33e-4ec7-bcce-50481feb4dd8"
+      }
+    }
   }
 }
