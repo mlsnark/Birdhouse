@@ -1,5 +1,6 @@
 {
   "expo": {
+    "icon": "./assets/icon.png",
     "name": "Birdhouse",
     "slug": "birdhouse",
     "scheme": "birdhouse",
