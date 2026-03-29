@@ -212,13 +212,18 @@ export default function PlaybackScreen({ navigation, route }) {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        {/* Status text */}
-        <Text style={styles.statusText}>
-          {isCountdown ? 'Starting in…'
-            : isPlaying ? 'Now playing'
-            : isPaused ? 'Paused'
-            : 'Preparing…'}
-        </Text>
+        {/* Top row: status + room code */}
+        <View style={styles.topRow}>
+          <Text style={styles.statusText}>
+            {isCountdown ? 'Starting in…'
+              : isPlaying ? 'Now playing'
+              : isPaused ? 'Paused'
+              : 'Preparing…'}
+          </Text>
+          <View style={styles.roomChip}>
+            <Text style={styles.roomChipText}>{roomCode}</Text>
+          </View>
+        </View>
 
         {/* Main display */}
         <View style={styles.centerDisplay}>
@@ -262,11 +267,6 @@ export default function PlaybackScreen({ navigation, route }) {
             <Text style={styles.repeatText}>{activeRepeat}</Text>
           </View>
         )}
-
-        {/* Room code chip */}
-        <View style={styles.roomChip}>
-          <Text style={styles.roomChipText}>{roomCode}</Text>
-        </View>
 
         {/* Host controls */}
         {isHost && isPlaying && (
@@ -342,11 +342,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+    marginTop: 8,
+  },
   statusText: {
     fontSize: 16,
     color: colors.textMuted,
     fontWeight: '500',
-    marginTop: 20,
     letterSpacing: 0.5,
   },
 
@@ -396,7 +402,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 18,
-    marginBottom: 16,
   },
   roomChipText: {
     color: colors.textMuted,
@@ -413,8 +418,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(252,211,77,0.3)',
   },
   instructionText: {
-    color: '#FCD34D', fontSize: 18, fontWeight: '600',
-    textAlign: 'center', lineHeight: 26,
+    color: '#FCD34D', fontSize: 20, fontWeight: '600',
+    textAlign: 'center', lineHeight: 28,
   },
   repeatBanner: {
     alignSelf: 'stretch', marginBottom: 12,
