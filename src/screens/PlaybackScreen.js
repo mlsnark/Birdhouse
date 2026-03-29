@@ -211,88 +211,83 @@ export default function PlaybackScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Inner wrapper — absolute children are positioned within the safe area, not behind the status bar */}
-      <View style={{ flex: 1 }}>
+      <View style={styles.container}>
+        {/* Status text */}
+        <Text style={styles.statusText}>
+          {isCountdown ? 'Starting in…'
+            : isPlaying ? 'Now playing'
+            : isPaused ? 'Paused'
+            : 'Preparing…'}
+        </Text>
 
-        {/* Instruction caption — absolute top of safe area */}
+        {/* Main display */}
+        <View style={styles.centerDisplay}>
+          {isCountdown && (
+            <Text style={[styles.countdown, secondsLeft === 1 && styles.countdownFinal]}>
+              {secondsLeft}
+            </Text>
+          )}
+          {isPlaying && (
+            <View style={styles.playingDisplay}>
+              <Text style={styles.playingIcon}>▶</Text>
+              <PulsingDots />
+            </View>
+          )}
+          {isPaused && (
+            <Text style={styles.pausedIcon}>⏸</Text>
+          )}
+          {phase === 'loading' && (
+            <Text style={styles.loadingText}>Loading…</Text>
+          )}
+        </View>
+
+        {/* Error banner */}
+        {errorMsg && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>Track error: {errorMsg}</Text>
+            <Text style={styles.errorSub}>Countdown is still running for other devices.</Text>
+          </View>
+        )}
+
+        {/* Instruction caption — above repeat, just above the bottom controls */}
         {!!activeInstruction && (
           <View style={styles.instructionBanner}>
             <Text style={styles.instructionText}>{activeInstruction}</Text>
           </View>
         )}
 
-        <View style={styles.container}>
-          {/* Status text */}
-          <Text style={styles.statusText}>
-            {isCountdown ? 'Starting in…'
-              : isPlaying ? 'Now playing'
-              : isPaused ? 'Paused'
-              : 'Preparing…'}
-          </Text>
-
-          {/* Main display */}
-          <View style={styles.centerDisplay}>
-            {isCountdown && (
-              <Text style={[styles.countdown, secondsLeft === 1 && styles.countdownFinal]}>
-                {secondsLeft}
-              </Text>
-            )}
-            {isPlaying && (
-              <View style={styles.playingDisplay}>
-                <Text style={styles.playingIcon}>▶</Text>
-                <PulsingDots />
-              </View>
-            )}
-            {isPaused && (
-              <Text style={styles.pausedIcon}>⏸</Text>
-            )}
-            {phase === 'loading' && (
-              <Text style={styles.loadingText}>Loading…</Text>
-            )}
+        {/* Repeat caption — above room code */}
+        {!!activeRepeat && (
+          <View style={styles.repeatBanner}>
+            <Text style={styles.repeatText}>{activeRepeat}</Text>
           </View>
+        )}
 
-          {/* Error banner */}
-          {errorMsg && (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>Track error: {errorMsg}</Text>
-              <Text style={styles.errorSub}>Countdown is still running for other devices.</Text>
-            </View>
-          )}
-
-          {/* Repeat caption — above room code */}
-          {!!activeRepeat && (
-            <View style={styles.repeatBanner}>
-              <Text style={styles.repeatText}>{activeRepeat}</Text>
-            </View>
-          )}
-
-          {/* Room code chip */}
-          <View style={styles.roomChip}>
-            <Text style={styles.roomChipText}>{roomCode}</Text>
-          </View>
-
-          {/* Host controls */}
-          {isHost && isPlaying && (
-            <TouchableOpacity style={styles.pauseBtn} onPress={handlePause}>
-              <Text style={styles.pauseBtnText}>⏸  Pause</Text>
-            </TouchableOpacity>
-          )}
-          {isHost && isPaused && (
-            <TouchableOpacity style={styles.resumeBtn} onPress={handleResume}>
-              <Text style={styles.resumeBtnText}>▶  Resume</Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Stop button */}
-          {(isCountdown || isPlaying || isPaused) && (
-            <TouchableOpacity style={styles.stopBtn} onPress={handleStop}>
-              <Text style={styles.stopBtnText}>
-                {isHost ? 'Stop & End Session' : 'Leave'}
-              </Text>
-            </TouchableOpacity>
-          )}
+        {/* Room code chip */}
+        <View style={styles.roomChip}>
+          <Text style={styles.roomChipText}>{roomCode}</Text>
         </View>
 
+        {/* Host controls */}
+        {isHost && isPlaying && (
+          <TouchableOpacity style={styles.pauseBtn} onPress={handlePause}>
+            <Text style={styles.pauseBtnText}>⏸  Pause</Text>
+          </TouchableOpacity>
+        )}
+        {isHost && isPaused && (
+          <TouchableOpacity style={styles.resumeBtn} onPress={handleResume}>
+            <Text style={styles.resumeBtnText}>▶  Resume</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Stop button */}
+        {(isCountdown || isPlaying || isPaused) && (
+          <TouchableOpacity style={styles.stopBtn} onPress={handleStop}>
+            <Text style={styles.stopBtnText}>
+              {isHost ? 'Stop & End Session' : 'Leave'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -411,10 +406,11 @@ const styles = StyleSheet.create({
   },
 
   instructionBanner: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
-    backgroundColor: 'rgba(0,0,0,0.82)',
-    paddingHorizontal: 24, paddingVertical: 18,
+    alignSelf: 'stretch', marginBottom: 12,
+    backgroundColor: 'rgba(252,211,77,0.12)',
+    borderRadius: 10, paddingHorizontal: 20, paddingVertical: 14,
     alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(252,211,77,0.3)',
   },
   instructionText: {
     color: '#FCD34D', fontSize: 18, fontWeight: '600',
