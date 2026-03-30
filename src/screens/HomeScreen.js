@@ -53,7 +53,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={s.footer}>
             All devices must be on the same network for best results.
           </Text>
-          <Text selectable style={s.deviceId}>Device ID: {deviceId}</Text>
+          <Text style={s.deviceId}>Device ID: {deviceId}</Text>
         </View>
       </View>
     </SafeAreaView>
