@@ -2,17 +2,13 @@
  * HomeScreen — landing page.
  * Browse published experiences or join a session directly with a code.
  */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
 } from 'react-native';
 import { colors, radius } from '../theme';
-import { getDeviceId } from '../utils/deviceId';
 
 export default function HomeScreen({ navigation }) {
-  const [deviceId, setDeviceId] = useState('');
-  useEffect(() => { getDeviceId().then(setDeviceId); }, []);
-
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.container}>
@@ -49,12 +45,9 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <View>
-          <Text style={s.footer}>
-            All devices must be on the same network for best results.
-          </Text>
-          <Text selectable style={s.deviceId}>Device ID: {deviceId}</Text>
-        </View>
+        <Text style={s.footer}>
+          All devices must be on the same network for best results.
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -84,5 +77,4 @@ const s = StyleSheet.create({
   btnSub: { fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
 
   footer: { textAlign: 'center', fontSize: 12, color: colors.textDim, lineHeight: 18 },
-  deviceId: { textAlign: 'center', fontSize: 10, color: colors.textDim, marginTop: 6, opacity: 0.5 },
 });
