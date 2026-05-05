@@ -11,14 +11,20 @@
       "resizeMode": "contain",
       "backgroundColor": "#0a0a0a"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.birdhouse.app",
       "buildNumber": "1",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"],
-        "NSMicrophoneUsageDescription": "Birdhouse plays synchronized audio tracks."
+        "UIBackgroundModes": [
+          "audio",
+          "audio"
+        ],
+        "NSMicrophoneUsageDescription": "Birdhouse plays synchronized audio tracks.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -26,7 +32,11 @@
         "backgroundColor": "#0a0a0a"
       },
       "package": "com.birdhouse.app",
-      "permissions": ["FOREGROUND_SERVICE", "WAKE_LOCK", "android.permission.MODIFY_AUDIO_SETTINGS"]
+      "permissions": [
+        "FOREGROUND_SERVICE",
+        "WAKE_LOCK",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "plugins": [
       [

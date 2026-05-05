@@ -3,7 +3,7 @@ export const colors = {
   surface: '#141414',
   card: '#1e1e1e',
   border: '#2a2a2a',
-  primary: '#7C3AED',     // violet
+  primary: '#6B5B9E',     // violet
   primaryDim: '#4C1D95',
   accent: '#10B981',      // emerald — ready / active
   accentDim: '#065F46',

@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image
 } from 'react-native';
 import { colors, radius } from '../theme';
 
@@ -14,9 +14,9 @@ export default function HomeScreen({ navigation }) {
       <View style={s.container}>
 
         <View style={s.header}>
-          <Text style={s.logo}>🐦</Text>
+          <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
           <Text style={s.title}>Birdhouse</Text>
-          <Text style={s.tagline}>Synchronized audio experiences, together.</Text>
+          <Text style={s.tagline}>Synchronized audio experiences</Text>
         </View>
 
         <View style={s.actions}>
@@ -25,7 +25,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Browse')}
             activeOpacity={0.85}
           >
-            <Text style={s.btnIcon}>🎭</Text>
+            <Text style={[s.btnIcon, { color: '#ffffff', fontSize: 25 }]}>𓅆</Text>
             <View>
               <Text style={s.btnLabel}>Browse Experiences</Text>
               <Text style={s.btnSub}>Explore and host published experiences</Text>
@@ -37,7 +37,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Join')}
             activeOpacity={0.85}
           >
-            <Text style={s.btnIcon}>🎧</Text>
+            <Text style={[s.btnIcon, { color: '#ffffff', fontSize: 20 }]}>𓉸</Text>
             <View>
               <Text style={[s.btnLabel, { color: colors.text }]}>Join with a Code</Text>
               <Text style={[s.btnSub, { color: colors.textMuted }]}>Enter a room code from your host</Text>
@@ -46,7 +46,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <Text style={s.footer}>
-          All devices must be on the same network for best results.
+          All devices must be on the same network for best results
         </Text>
       </View>
     </SafeAreaView>
@@ -60,9 +60,9 @@ const s = StyleSheet.create({
     justifyContent: 'space-between', paddingBottom: 32,
   },
   header: { marginTop: 64, alignItems: 'center' },
-  logo: { fontSize: 64, marginBottom: 12 },
+  logo: { width: 180, height: 180, marginBottom: 0 },
   title: { fontSize: 40, fontWeight: '800', color: colors.text, letterSpacing: -1 },
-  tagline: { marginTop: 10, fontSize: 15, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
+  tagline: { marginTop: 10, fontSize: 15, color: colors.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: -60 },
 
   actions: { gap: 14 },
   btn: {
@@ -70,7 +70,7 @@ const s = StyleSheet.create({
     paddingVertical: 20, paddingHorizontal: 22,
     borderRadius: radius.lg,
   },
-  btnPrimary: { backgroundColor: colors.primary },
+  btnPrimary: { backgroundColor: '#6B5B9E' },
   btnSecondary: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   btnIcon: { fontSize: 28 },
   btnLabel: { fontSize: 17, fontWeight: '700', color: '#fff' },
