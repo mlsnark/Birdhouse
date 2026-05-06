@@ -241,7 +241,7 @@ export default function HostScreen({ navigation, route }) {
     return (
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView contentContainerStyle={s.setupScroll} keyboardShouldPersistTaps="handled">
+          <ScrollView contentContainerStyle={s.setupScroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
 
             {/* Experience header (experience mode) */}
             {isExperienceMode && (
