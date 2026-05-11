@@ -76,6 +76,8 @@ export async function createSession(
     status: 'lobby',
     createdAt: clockSync.now(),
     startAt: null,
+    loop: false,
+    loopSequence: 0,
     experienceId: experienceId || null,
     title: experienceTitle || null,
     participants: {
@@ -217,6 +219,19 @@ export async function resumeSession(roomCode) {
 
 export function endSession(roomCode) {
   return remove(ref(db, `sessions/${roomCode}`));
+}
+
+export function setLoopMode(roomCode, enabled) {
+  return update(ref(db, `sessions/${roomCode}`), { loop: enabled });
+}
+
+export async function triggerLoop(roomCode, countdownSeconds = 3) {
+  const snap = await get(ref(db, `sessions/${roomCode}`));
+  const session = snap.val();
+  const startAt = clockSync.now() + countdownSeconds * 1000;
+  const loopSequence = (session?.loopSequence ?? 0) + 1;
+  await update(ref(db, `sessions/${roomCode}`), { startAt, loopSequence });
+  return startAt;
 }
 
 // ─── Participant actions ──────────────────────────────────────────────────────
