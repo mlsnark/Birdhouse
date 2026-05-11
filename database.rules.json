@@ -28,6 +28,12 @@
         "pausedAt": {
           ".write": "data.parent().exists()"
         },
+        "loop": {
+          ".write": "data.parent().exists()"
+        },
+        "loopSequence": {
+          ".write": "data.parent().exists()"
+        },
 
         "participants": {
           "$deviceId": {
