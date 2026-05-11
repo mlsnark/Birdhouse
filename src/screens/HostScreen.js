@@ -90,6 +90,30 @@ export default function HostScreen({ navigation, route }) {
     }
   }, [session?.status, session?.startAt]);
 
+  // Intercept back navigation in lobby so the host can't accidentally orphan participants
+  useEffect(() => {
+    if (phase !== 'lobby') return;
+    const unsub = navigation.addListener('beforeRemove', (e) => {
+      e.preventDefault();
+      Alert.alert(
+        'Leave lobby?',
+        'This will end the session and disconnect all participants.',
+        [
+          { text: 'Stay', style: 'cancel' },
+          {
+            text: 'End Session', style: 'destructive',
+            onPress: async () => {
+              if (unsubscribeRef.current) unsubscribeRef.current();
+              await endSession(roomCode).catch(() => {});
+              navigation.dispatch(e.data.action);
+            },
+          },
+        ],
+      );
+    });
+    return unsub;
+  }, [phase, roomCode, navigation]);
+
   // ── Roles (standalone mode only) ──────────────────────────────────────────
 
   function addRole() {
@@ -502,7 +526,7 @@ export default function HostScreen({ navigation, route }) {
 
           {/* Loop toggle */}
           <View style={s.loopRow}>
-            <View>
+            <View style={{ flex: 1, marginRight: 12 }}>
               <Text style={s.loopLabel}>Loop audio</Text>
               <Text style={s.loopSub}>Repeat continuously until you end the session</Text>
             </View>
@@ -604,7 +628,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16,
   },
   loopLabel: { fontSize: 15, fontWeight: '600', color: colors.text, marginBottom: 2 },
-  loopSub: { fontSize: 12, color: colors.textDim, maxWidth: 220 },
+  loopSub: { fontSize: 12, color: colors.textDim },
 
   primaryBtn: {
     backgroundColor: colors.primary, borderRadius: radius.lg,
