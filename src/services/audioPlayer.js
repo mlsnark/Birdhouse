@@ -26,6 +26,11 @@ class AudioPlayerService {
     this._coarseTimer = null;
     this._fineInterval = null;
     this._isScheduled = false;
+    this._onFinished = null;
+  }
+
+  setOnFinished(callback) {
+    this._onFinished = callback;
   }
 
   /** Must be called once before loading any tracks. */
@@ -45,10 +50,18 @@ class AudioPlayerService {
   async loadTrack(uri, onProgress) {
     await this._unloadCurrent();
 
+    const self = this;
+    const statusHandler = (status) => {
+      if (onProgress) onProgress(status);
+      if (status.isLoaded && status.didJustFinish && self._onFinished) {
+        self._onFinished();
+      }
+    };
+
     const { sound, status } = await Audio.Sound.createAsync(
       { uri },
       { shouldPlay: false, volume: 1.0 },
-      onProgress ?? null,
+      statusHandler,
     );
 
     this.sound = sound;

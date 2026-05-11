@@ -24,11 +24,12 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  Switch,
 } from 'react-native';
 import { colors } from '../theme';
 import clockSync from '../services/clockSync';
 import audioPlayer from '../services/audioPlayer';
-import { subscribeSession, pauseSession, resumeSession, endSession } from '../services/sessionService';
+import { subscribeSession, pauseSession, resumeSession, endSession, setLoopMode, triggerLoop } from '../services/sessionService';
 
 const COUNTDOWN_SECONDS = 5;
 
@@ -43,6 +44,14 @@ export default function PlaybackScreen({ navigation, route }) {
   const playedRef = useRef(false);
   const prevStatusRef = useRef(null);
   const startAtRef = useRef(startAt);
+
+  // Loop
+  const [loop, setLoop] = useState(false);
+  const loopRef = useRef(false);
+  const isLoopingRef = useRef(false);
+  const prevLoopSequenceRef = useRef(null);
+
+  useEffect(() => { loopRef.current = loop; }, [loop]);
 
   // Captions
   const captionsRef = useRef([]);
@@ -120,6 +129,22 @@ export default function PlaybackScreen({ navigation, route }) {
         setPhase('playing');
         startCaptionTick();
       }
+
+      // Loop detection: loopSequence increments each time host triggers a loop
+      const currentLoopSeq = data.loopSequence ?? 0;
+      if (prevLoopSequenceRef.current === null) {
+        prevLoopSequenceRef.current = currentLoopSeq;
+      } else if (currentLoopSeq > prevLoopSequenceRef.current) {
+        prevLoopSequenceRef.current = currentLoopSeq;
+        startAtRef.current = data.startAt;
+        isLoopingRef.current = false;
+        if (trackUrl?.trim()) {
+          audioPlayer.schedulePlayback(data.startAt);
+        }
+        setPhase('playing');
+      }
+
+      setLoop(data.loop ?? false);
     });
     return unsub;
   }, [roomCode]);
@@ -127,10 +152,10 @@ export default function PlaybackScreen({ navigation, route }) {
   // ── Countdown ticker ───────────────────────────────────────────────────────
 
   function startCountdown() {
+    clearInterval(tickRef.current);
     tickRef.current = setInterval(() => {
-      // Use server time for the display so all devices show the same number.
       const serverNow = clockSync.now();
-      const remaining = Math.ceil((startAt - serverNow) / 1000);
+      const remaining = Math.ceil((startAtRef.current - serverNow) / 1000);
 
       if (remaining > 0) {
         setSecondsLeft(remaining);
@@ -169,6 +194,18 @@ export default function PlaybackScreen({ navigation, route }) {
     if (phase === 'paused') clearInterval(captionTickRef.current);
     return () => clearInterval(captionTickRef.current);
   }, [phase]);
+
+  // Host: when track finishes and loop is on, trigger a synchronized loop for all
+  useEffect(() => {
+    if (!isHost || !trackUrl?.trim()) return;
+    audioPlayer.setOnFinished(async () => {
+      if (!loopRef.current || isLoopingRef.current) return;
+      isLoopingRef.current = true;
+      try { await triggerLoop(roomCode, 0); }
+      catch (_) { isLoopingRef.current = false; }
+    });
+    return () => audioPlayer.setOnFinished(null);
+  }, [isHost, trackUrl, roomCode]);
 
   // ── Pause / Resume (host only) ─────────────────────────────────────────────
 
@@ -279,6 +316,23 @@ export default function PlaybackScreen({ navigation, route }) {
             <Text style={styles.resumeBtnText}>▶  Resume</Text>
           </TouchableOpacity>
         )}
+
+        {/* Loop toggle (host) / Loop indicator (participants) */}
+        {isHost ? (
+          <View style={styles.loopRow}>
+            <Text style={[styles.loopLabel, loop && styles.loopLabelActive]}>🔁  Loop audio</Text>
+            <Switch
+              value={loop}
+              onValueChange={(v) => setLoopMode(roomCode, v).catch(() => {})}
+              trackColor={{ false: colors.border, true: colors.primaryDim }}
+              thumbColor={loop ? colors.primary : colors.textDim}
+            />
+          </View>
+        ) : loop ? (
+          <View style={styles.loopIndicator}>
+            <Text style={styles.loopIndicatorText}>🔁  Looping</Text>
+          </View>
+        ) : null}
 
         {/* Stop button */}
         {(isCountdown || isPlaying || isPaused) && (
@@ -458,4 +512,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   stopBtnText: { color: colors.danger, fontWeight: '600', fontSize: 15 },
+
+  loopRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    alignSelf: 'stretch',
+    backgroundColor: colors.card, borderRadius: 999,
+    borderWidth: 1, borderColor: colors.border,
+    paddingVertical: 12, paddingHorizontal: 20, marginBottom: 12,
+  },
+  loopLabel: { fontSize: 15, fontWeight: '600', color: colors.textMuted },
+  loopLabelActive: { color: colors.text },
+  loopIndicator: {
+    backgroundColor: colors.card, borderRadius: 999,
+    borderWidth: 1, borderColor: colors.border,
+    paddingVertical: 8, paddingHorizontal: 20, marginBottom: 12,
+  },
+  loopIndicatorText: { color: colors.textMuted, fontSize: 14, fontWeight: '500' },
 });

@@ -12,13 +12,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator,
-  KeyboardAvoidingView, Platform, Image, Share,
+  KeyboardAvoidingView, Platform, Image, Share, Switch,
 } from 'react-native';
 import * as Linking from 'expo-linking';
 import { colors, radius } from '../theme';
 import {
   generateRoomCode, createSession, subscribeSession,
-  setParticipantTrack, setParticipantRole, markReady, initiateStart, endSession,
+  setParticipantTrack, setParticipantRole, markReady, initiateStart, endSession, setLoopMode,
 } from '../services/sessionService';
 import { getLibrary } from '../services/trackLibrary';
 import { getDeviceId } from '../utils/deviceId';
@@ -500,6 +500,20 @@ export default function HostScreen({ navigation, route }) {
             })}
           </View>
 
+          {/* Loop toggle */}
+          <View style={s.loopRow}>
+            <View>
+              <Text style={s.loopLabel}>Loop audio</Text>
+              <Text style={s.loopSub}>Repeat continuously until you end the session</Text>
+            </View>
+            <Switch
+              value={session?.loop ?? false}
+              onValueChange={(v) => setLoopMode(roomCode, v).catch(() => {})}
+              trackColor={{ false: colors.border, true: colors.primaryDim }}
+              thumbColor={session?.loop ? colors.primary : colors.textDim}
+            />
+          </View>
+
           <TouchableOpacity
             style={[s.primaryBtn, starting && s.btnDisabled]}
             onPress={handleStart}
@@ -582,6 +596,15 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: 12, paddingVertical: 10, color: colors.text, fontSize: 13,
   },
+
+  loopRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: colors.card, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16,
+  },
+  loopLabel: { fontSize: 15, fontWeight: '600', color: colors.text, marginBottom: 2 },
+  loopSub: { fontSize: 12, color: colors.textDim, maxWidth: 220 },
 
   primaryBtn: {
     backgroundColor: colors.primary, borderRadius: radius.lg,

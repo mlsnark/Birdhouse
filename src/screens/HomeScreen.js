@@ -46,7 +46,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <Text style={s.footer}>
-          All devices must be on the same network for best results
+          All devices must be on the same network for best results.
         </Text>
       </View>
     </SafeAreaView>
