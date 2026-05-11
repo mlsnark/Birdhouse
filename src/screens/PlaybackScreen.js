@@ -48,7 +48,6 @@ export default function PlaybackScreen({ navigation, route }) {
   // Loop
   const [loop, setLoop] = useState(false);
   const loopRef = useRef(false);
-  const [loopCount, setLoopCount] = useState(0);
   const isLoopingRef = useRef(false);
   const prevLoopSequenceRef = useRef(null);
 
@@ -142,10 +141,7 @@ export default function PlaybackScreen({ navigation, route }) {
         if (trackUrl?.trim()) {
           audioPlayer.schedulePlayback(data.startAt);
         }
-        setSecondsLeft(COUNTDOWN_SECONDS);
-        setLoopCount((c) => c + 1);
-        setPhase('countdown');
-        startCountdown();
+        setPhase('playing');
       }
 
       setLoop(data.loop ?? false);
@@ -205,7 +201,7 @@ export default function PlaybackScreen({ navigation, route }) {
     audioPlayer.setOnFinished(async () => {
       if (!loopRef.current || isLoopingRef.current) return;
       isLoopingRef.current = true;
-      try { await triggerLoop(roomCode, 3); }
+      try { await triggerLoop(roomCode, 0); }
       catch (_) { isLoopingRef.current = false; }
     });
     return () => audioPlayer.setOnFinished(null);
@@ -256,7 +252,7 @@ export default function PlaybackScreen({ navigation, route }) {
         {/* Top row: status + room code */}
         <View style={styles.topRow}>
           <Text style={styles.statusText}>
-            {isCountdown ? (loopCount > 0 ? 'Looping…' : 'Starting in…')
+            {isCountdown ? 'Starting in…'
               : isPlaying ? 'Now playing'
               : isPaused ? 'Paused'
               : 'Preparing…'}
