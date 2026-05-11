@@ -326,6 +326,7 @@ export default function PlaybackScreen({ navigation, route }) {
               onValueChange={(v) => setLoopMode(roomCode, v).catch(() => {})}
               trackColor={{ false: colors.border, true: colors.primaryDim }}
               thumbColor={loop ? colors.primary : colors.textDim}
+              ios_backgroundColor={colors.border}
             />
           </View>
         ) : loop ? (
