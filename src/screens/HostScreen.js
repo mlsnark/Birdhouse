@@ -9,7 +9,6 @@
  * Lobby phase is the same in both modes.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { usePreventRemove } from '@react-navigation/native';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator,
@@ -91,24 +90,36 @@ export default function HostScreen({ navigation, route }) {
     }
   }, [session?.status, session?.startAt]);
 
-  // Intercept back navigation in lobby so the host can't accidentally orphan participants
-  usePreventRemove(phase === 'lobby', ({ data }) => {
-    Alert.alert(
-      'Leave lobby?',
-      'This will end the session and disconnect all participants.',
-      [
-        { text: 'Stay', style: 'cancel' },
-        {
-          text: 'End Session', style: 'destructive',
-          onPress: async () => {
-            if (unsubscribeRef.current) unsubscribeRef.current();
-            await endSession(roomCode).catch(() => {});
-            navigation.dispatch(data.action);
+  // In lobby: disable swipe-back and replace header back button with a confirmation prompt
+  useEffect(() => {
+    if (phase !== 'lobby') return;
+    const onPress = () => {
+      Alert.alert(
+        'Leave lobby?',
+        'This will end the session and disconnect all participants.',
+        [
+          { text: 'Stay', style: 'cancel' },
+          {
+            text: 'End Session', style: 'destructive',
+            onPress: async () => {
+              if (unsubscribeRef.current) unsubscribeRef.current();
+              await endSession(roomCode).catch(() => {});
+              navigation.goBack();
+            },
           },
-        },
-      ],
-    );
-  });
+        ],
+      );
+    };
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerLeft: () => (
+        <TouchableOpacity onPress={onPress} style={{ marginLeft: 4, padding: 4 }}>
+          <Text style={{ color: colors.primary, fontSize: 17 }}>‹ Back</Text>
+        </TouchableOpacity>
+      ),
+    });
+    return () => navigation.setOptions({ gestureEnabled: true, headerLeft: undefined });
+  }, [phase, roomCode]);
 
   // ── Roles (standalone mode only) ──────────────────────────────────────────
 
