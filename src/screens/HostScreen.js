@@ -9,6 +9,7 @@
  * Lobby phase is the same in both modes.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { usePreventRemove } from '@react-navigation/native';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator,
@@ -91,28 +92,23 @@ export default function HostScreen({ navigation, route }) {
   }, [session?.status, session?.startAt]);
 
   // Intercept back navigation in lobby so the host can't accidentally orphan participants
-  useEffect(() => {
-    if (phase !== 'lobby') return;
-    const unsub = navigation.addListener('beforeRemove', (e) => {
-      e.preventDefault();
-      Alert.alert(
-        'Leave lobby?',
-        'This will end the session and disconnect all participants.',
-        [
-          { text: 'Stay', style: 'cancel' },
-          {
-            text: 'End Session', style: 'destructive',
-            onPress: async () => {
-              if (unsubscribeRef.current) unsubscribeRef.current();
-              await endSession(roomCode).catch(() => {});
-              navigation.dispatch(e.data.action);
-            },
+  usePreventRemove(phase === 'lobby', ({ data }) => {
+    Alert.alert(
+      'Leave lobby?',
+      'This will end the session and disconnect all participants.',
+      [
+        { text: 'Stay', style: 'cancel' },
+        {
+          text: 'End Session', style: 'destructive',
+          onPress: async () => {
+            if (unsubscribeRef.current) unsubscribeRef.current();
+            await endSession(roomCode).catch(() => {});
+            navigation.dispatch(data.action);
           },
-        ],
-      );
-    });
-    return unsub;
-  }, [phase, roomCode, navigation]);
+        },
+      ],
+    );
+  });
 
   // ── Roles (standalone mode only) ──────────────────────────────────────────
 
