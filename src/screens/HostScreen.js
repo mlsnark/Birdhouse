@@ -535,6 +535,7 @@ export default function HostScreen({ navigation, route }) {
               onValueChange={(v) => setLoopMode(roomCode, v).catch(() => {})}
               trackColor={{ false: colors.border, true: colors.primaryDim }}
               thumbColor={session?.loop ? colors.primary : colors.textDim}
+              ios_backgroundColor={colors.border}
             />
           </View>
 
