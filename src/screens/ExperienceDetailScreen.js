@@ -129,7 +129,7 @@ export default function ExperienceDetailScreen({ navigation, route }) {
 
           {/* Actions */}
           <TouchableOpacity style={s.primaryBtn} onPress={handleHostThis} activeOpacity={0.85}>
-            <Text style={s.primaryBtnText}>Host This Experience</Text>
+            <Text style={s.primaryBtnText}>Host This Performance</Text>
           </TouchableOpacity>
 
           {!showJoinInput ? (

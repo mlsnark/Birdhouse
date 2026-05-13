@@ -16,7 +16,7 @@ export default function HomeScreen({ navigation }) {
         <View style={s.header}>
           <Text style={s.logo}>🐦</Text>
           <Text style={s.title}>Birdhouse</Text>
-          <Text style={s.tagline}>Synchronized audio experiences, together.</Text>
+          <Text style={s.tagline}>Synchronized audio performances, together.</Text>
         </View>
 
         <View style={s.actions}>
@@ -27,8 +27,8 @@ export default function HomeScreen({ navigation }) {
           >
             <Text style={s.btnIcon}>🎭</Text>
             <View>
-              <Text style={s.btnLabel}>Browse Experiences</Text>
-              <Text style={s.btnSub}>Explore and host published experiences</Text>
+              <Text style={s.btnLabel}>Browse Performances</Text>
+              <Text style={s.btnSub}>Explore and host an experience</Text>
             </View>
           </TouchableOpacity>
 
@@ -39,7 +39,7 @@ export default function HomeScreen({ navigation }) {
           >
             <Text style={s.btnIcon}>🎧</Text>
             <View>
-              <Text style={[s.btnLabel, { color: colors.text }]}>Join with a Code</Text>
+              <Text style={[s.btnLabel, { color: colors.text }]}>Join Performance</Text>
               <Text style={[s.btnSub, { color: colors.textMuted }]}>Enter a room code from your host</Text>
             </View>
           </TouchableOpacity>
