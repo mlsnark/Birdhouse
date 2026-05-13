@@ -132,7 +132,7 @@ export default function CreateExperienceScreen({ navigation, route }) {
         await updateExperience(existing.id, {
           title, description, imageUrl: finalImageUrl, roles,
         });
-        Alert.alert('Saved', 'Experience updated.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
+        Alert.alert('Saved', 'Performance updated.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
       } else {
         await createExperience({
           title, description,
