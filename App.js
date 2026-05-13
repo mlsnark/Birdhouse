@@ -77,7 +77,7 @@ export default function App() {
           name="CreateExperience"
           component={CreateExperienceScreen}
           options={({ route }) => ({
-            title: route.params?.experience ? 'Edit Experience' : 'New Experience',
+            title: route.params?.experience ? 'Edit Performance' : 'New Performance',
           })}
         />
         <Stack.Screen
