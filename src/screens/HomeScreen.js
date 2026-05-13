@@ -2,13 +2,22 @@
  * HomeScreen — landing page.
  * Browse published performances or join a session directly with a code.
  */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image, Clipboard, Alert
 } from 'react-native';
 import { colors, radius } from '../theme';
+import { getDeviceId } from '../utils/deviceId';
 
 export default function HomeScreen({ navigation }) {
+  const deviceIdRef = useRef(null);
+  useEffect(() => { getDeviceId().then((id) => { deviceIdRef.current = id; }); }, []);
+
+  function handleFooterLongPress() {
+    if (!deviceIdRef.current) return;
+    Clipboard.setString(deviceIdRef.current);
+    Alert.alert('Device ID copied', deviceIdRef.current);
+  }
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.container}>
@@ -45,9 +54,11 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <Text style={s.footer}>
-          All devices must be on the same network for best results.
-        </Text>
+        <TouchableOpacity onLongPress={handleFooterLongPress} delayLongPress={1500}>
+          <Text style={s.footer}>
+            All devices must be on the same network for best results.
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
