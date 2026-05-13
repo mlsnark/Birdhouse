@@ -154,7 +154,7 @@ export default function CreateExperienceScreen({ navigation, route }) {
   }
 
   async function handleDelete() {
-    Alert.alert('Delete Experience', 'This cannot be undone.', [
+    Alert.alert('Delete Performance', 'This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete', style: 'destructive',
@@ -340,7 +340,7 @@ export default function CreateExperienceScreen({ navigation, route }) {
 
           {isEditing && (
             <TouchableOpacity style={s.deleteBtn} onPress={handleDelete}>
-              <Text style={s.deleteBtnText}>Delete Experience</Text>
+              <Text style={s.deleteBtnText}>Delete Performance</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
