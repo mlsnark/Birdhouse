@@ -13,7 +13,9 @@ import {
 } from 'react-native';
 import { colors, radius } from '../theme';
 import { getDeviceId } from '../utils/deviceId';
-import { subscribeExperience } from '../services/experienceService';
+import { subscribeExperience, deleteExperience } from '../services/experienceService';
+
+const ADMIN_DEVICE_ID = 'mncegkie-u3ul942';
 
 const POSTER_COLORS = ['#4C1D95', '#065F46', '#1E3A5F', '#7C2D12', '#374151', '#713F12'];
 function posterColor(title = '') {
@@ -53,7 +55,7 @@ export default function ExperienceDetailScreen({ navigation, route }) {
 
   useEffect(() => {
     getDeviceId().then((id) => {
-      setIsCreator(id === experience?.createdByDeviceId);
+      setIsCreator(id === experience?.createdByDeviceId || id === ADMIN_DEVICE_ID);
     });
   }, []);
 
@@ -99,12 +101,35 @@ export default function ExperienceDetailScreen({ navigation, route }) {
           <View style={s.titleRow}>
             <Text style={s.title}>{experience.title}</Text>
             {isCreator && (
-              <TouchableOpacity
-                style={s.editBtn}
-                onPress={() => navigation.navigate('CreateExperience', { experience })}
-              >
-                <Text style={s.editBtnText}>Edit</Text>
-              </TouchableOpacity>
+              <View style={s.ownerBtns}>
+                <TouchableOpacity
+                  style={s.editBtn}
+                  onPress={() => navigation.navigate('CreateExperience', { experience })}
+                >
+                  <Text style={s.editBtnText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={s.deleteBtn}
+                  onPress={() => {
+                    Alert.alert(
+                      'Delete performance?',
+                      'This cannot be undone.',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Delete', style: 'destructive',
+                          onPress: async () => {
+                            await deleteExperience(experience.id).catch(() => {});
+                            navigation.goBack();
+                          },
+                        },
+                      ],
+                    );
+                  }}
+                >
+                  <Text style={s.deleteBtnText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
 
@@ -180,13 +205,19 @@ const s = StyleSheet.create({
 
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 },
   title: { flex: 1, fontSize: 28, fontWeight: '900', color: colors.text, lineHeight: 34 },
+  ownerBtns: { flexDirection: 'row', gap: 8, marginLeft: 12, marginTop: 4 },
   editBtn: {
-    marginLeft: 12, marginTop: 4,
     backgroundColor: colors.card, borderRadius: radius.sm,
     paddingHorizontal: 14, paddingVertical: 6,
     borderWidth: 1, borderColor: colors.border,
   },
   editBtnText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  deleteBtn: {
+    backgroundColor: colors.card, borderRadius: radius.sm,
+    paddingHorizontal: 14, paddingVertical: 6,
+    borderWidth: 1, borderColor: colors.danger,
+  },
+  deleteBtnText: { color: colors.danger, fontSize: 13, fontWeight: '600' },
 
   creator: { fontSize: 13, color: colors.textDim, marginBottom: 16 },
   description: { fontSize: 15, color: colors.textMuted, lineHeight: 22, marginBottom: 24 },
