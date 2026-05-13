@@ -65,7 +65,7 @@ export default function BrowseScreen({ navigation }) {
           contentContainerStyle={s.list}
           ListEmptyComponent={
             <View style={s.empty}>
-              <Text style={s.emptyTitle}>No experiences yet</Text>
+              <Text style={s.emptyTitle}>No performances yet</Text>
               <Text style={s.emptyText}>Tap + Create to publish the first one.</Text>
             </View>
           }

@@ -64,7 +64,7 @@ export default function App() {
           name="Browse"
           component={BrowseScreen}
           options={({ navigation }) => ({
-            title: 'Experiences',
+            title: 'Performances',
             headerRight: () => (
               <HeaderButton
                 label="+ Create"
