@@ -75,7 +75,7 @@ export async function createSession(
     startAt: null,
     loop: false,
     loopSequence: 0,
-    autoAssign: false,
+    autoAssign: true,
     experienceId: experienceId || null,
     title: experienceTitle || null,
     participants: {
