@@ -14,7 +14,7 @@ import {
   Platform, ScrollView, Image, Keyboard,
 } from 'react-native';
 import { colors, radius } from '../theme';
-import { fetchSession, joinSession, joinSessionWithRole, joinLate } from '../services/sessionService';
+import { fetchSession, joinSession, joinSessionWithRole, joinSessionAutoAssign, joinLate } from '../services/sessionService';
 import { getDeviceId } from '../utils/deviceId';
 import clockSync from '../services/clockSync';
 import audioPlayer from '../services/audioPlayer';
@@ -53,7 +53,7 @@ export default function JoinScreen({ navigation, route }) {
     const code = roomCode.trim().toUpperCase();
     const trimmedName = name.trim();
 
-    if (code.length !== 6) { Alert.alert('Invalid code', 'Room codes are 6 characters.'); return; }
+    if (code.length !== 4 || !/^\d{4}$/.test(code)) { Alert.alert('Invalid code', 'Room codes are 4 digits.'); return; }
     if (!trimmedName) { Alert.alert('Name required', 'Please enter your name.'); return; }
 
     setLoading(true);
@@ -86,7 +86,10 @@ export default function JoinScreen({ navigation, route }) {
       }
 
       const hasRoles = Object.keys(data.roles ?? {}).length > 0;
-      if (hasRoles) {
+      if (hasRoles && data.autoAssign) {
+        await joinSessionAutoAssign(code, deviceIdRef.current, trimmedName);
+        navigation.replace('Lobby', { roomCode: code, deviceId: deviceIdRef.current, name: trimmedName });
+      } else if (hasRoles) {
         setSession(data);
         setPhase('roles');
         setLoading(false);
@@ -138,17 +141,17 @@ export default function JoinScreen({ navigation, route }) {
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView contentContainerStyle={s.container}>
             <Text style={s.title}>Join a Session</Text>
-            <Text style={s.sub}>Ask your host for the 6-character room code.</Text>
+            <Text style={s.sub}>Ask your host for the 4-digit room code.</Text>
 
             <Label>Room Code</Label>
             <TextInput
               style={s.codeInput}
-              placeholder="XXXXXX"
+              placeholder="0000"
               placeholderTextColor={colors.textDim}
               value={roomCode}
-              onChangeText={(t) => setRoomCode(t.toUpperCase())}
-              autoCapitalize="characters"
-              maxLength={6}
+              onChangeText={setRoomCode}
+              keyboardType="number-pad"
+              maxLength={4}
               returnKeyType="next"
             />
 

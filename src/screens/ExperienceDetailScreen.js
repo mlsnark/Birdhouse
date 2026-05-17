@@ -73,8 +73,8 @@ export default function ExperienceDetailScreen({ navigation, route }) {
 
   function handleJoin() {
     const code = roomCode.trim().toUpperCase();
-    if (code.length !== 6) {
-      Alert.alert('Invalid code', 'Room codes are 6 characters.');
+    if (code.length !== 4 || !/^\d{4}$/.test(code)) {
+      Alert.alert('Invalid code', 'Room codes are 4 digits.');
       return;
     }
     navigation.navigate('Join', { prefillCode: code });
@@ -170,12 +170,12 @@ export default function ExperienceDetailScreen({ navigation, route }) {
               <Text style={s.joinLabel}>Enter the room code from your host:</Text>
               <TextInput
                 style={s.codeInput}
-                placeholder="XXXXXX"
+                placeholder="0000"
                 placeholderTextColor={colors.textDim}
                 value={roomCode}
-                onChangeText={(t) => setRoomCode(t.toUpperCase())}
-                autoCapitalize="characters"
-                maxLength={6}
+                onChangeText={setRoomCode}
+                keyboardType="number-pad"
+                maxLength={4}
                 autoFocus
               />
               <TouchableOpacity style={s.primaryBtn} onPress={handleJoin} activeOpacity={0.85}>

@@ -34,6 +34,9 @@
         "loopSequence": {
           ".write": "data.parent().exists()"
         },
+        "autoAssign": {
+          ".write": "data.parent().exists()"
+        },
 
         "participants": {
           "$deviceId": {

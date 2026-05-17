@@ -18,7 +18,7 @@ import * as Linking from 'expo-linking';
 import { colors, radius } from '../theme';
 import {
   generateRoomCode, createSession, subscribeSession,
-  setParticipantTrack, setParticipantRole, markReady, initiateStart, endSession, setLoopMode,
+  setParticipantTrack, setParticipantRole, markReady, initiateStart, endSession, setLoopMode, setAutoAssign,
 } from '../services/sessionService';
 import { getLibrary } from '../services/trackLibrary';
 import { getDeviceId } from '../utils/deviceId';
@@ -545,6 +545,23 @@ export default function HostScreen({ navigation, route }) {
               ios_backgroundColor={colors.border}
             />
           </View>
+
+          {/* Auto-assign toggle (only relevant when roles are defined) */}
+          {hasRoles && (
+            <View style={s.loopRow}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={s.loopLabel}>Auto-assign roles</Text>
+                <Text style={s.loopSub}>Participants are placed automatically — no role picker shown</Text>
+              </View>
+              <Switch
+                value={session?.autoAssign ?? false}
+                onValueChange={(v) => setAutoAssign(roomCode, v).catch(() => {})}
+                trackColor={{ false: colors.border, true: colors.primaryDim }}
+                thumbColor={session?.autoAssign ? colors.primary : colors.textDim}
+                ios_backgroundColor={colors.border}
+              />
+            </View>
+          )}
 
           <TouchableOpacity
             style={[s.primaryBtn, starting && s.btnDisabled]}

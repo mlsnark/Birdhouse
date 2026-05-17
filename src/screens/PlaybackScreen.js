@@ -112,7 +112,16 @@ export default function PlaybackScreen({ navigation, route }) {
 
   useEffect(() => {
     const unsub = subscribeSession(roomCode, (data) => {
-      if (!data) { navigation.navigate('Home'); return; }
+      if (!data) {
+        if (!isHost) {
+          Alert.alert('Performance ended', 'The host has ended this performance.', [
+            { text: 'OK', onPress: () => navigation.navigate('Home') },
+          ]);
+        } else {
+          navigation.navigate('Home');
+        }
+        return;
+      }
 
       const prev = prevStatusRef.current;
       prevStatusRef.current = data.status;
@@ -271,7 +280,6 @@ export default function PlaybackScreen({ navigation, route }) {
           )}
           {isPlaying && (
             <View style={styles.playingDisplay}>
-              <Text style={styles.playingIcon}>▶</Text>
               <PulsingDots />
             </View>
           )}
@@ -433,7 +441,6 @@ const styles = StyleSheet.create({
   },
 
   playingDisplay: { alignItems: 'center' },
-  playingIcon: { fontSize: 80, color: colors.accent },
   pausedIcon: { fontSize: 80, color: colors.textMuted },
   loadingText: {
     fontSize: 24,
