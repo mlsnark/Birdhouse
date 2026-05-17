@@ -44,6 +44,7 @@ export default function PlaybackScreen({ navigation, route }) {
   const playedRef = useRef(false);
   const prevStatusRef = useRef(null);
   const startAtRef = useRef(startAt);
+  const pausedPositionRef = useRef(0);
 
   // Loop
   const [loop, setLoop] = useState(false);
@@ -127,13 +128,14 @@ export default function PlaybackScreen({ navigation, route }) {
       prevStatusRef.current = data.status;
 
       if (data.status === 'paused' && prev !== 'paused') {
+        pausedPositionRef.current = Math.max(0, clockSync.now() - startAtRef.current);
         clearInterval(tickRef.current);
         clearInterval(captionTickRef.current);
         audioPlayer.pause();
         setPhase('paused');
       } else if (data.status === 'starting' && prev === 'paused') {
         startAtRef.current = data.startAt;
-        if (trackUrl?.trim()) audioPlayer.schedulePlayback(data.startAt);
+        if (trackUrl?.trim()) audioPlayer.scheduleFromOffset(data.startAt, pausedPositionRef.current);
         setPhase('playing');
         startCaptionTick();
       }

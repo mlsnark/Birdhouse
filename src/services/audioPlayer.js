@@ -109,6 +109,47 @@ class AudioPlayerService {
     attempt();
   }
 
+  /**
+   * Like schedulePlayback but seeks to offsetMs before playing.
+   * Used for synchronized resume after pause.
+   */
+  scheduleFromOffset(startAtServer, offsetMs) {
+    if (!this.sound) return;
+    this._clearTimers();
+    this._isScheduled = true;
+    this._pendingOffset = offsetMs;
+
+    const localTarget = clockSync.toLocalTime(startAtServer) - PLAYBACK_LATENCY_COMP_MS;
+
+    const attempt = () => {
+      const remaining = localTarget - Date.now();
+      if (remaining <= 0) { this._fireFromOffset(); return; }
+      if (remaining > 200) {
+        this._coarseTimer = setTimeout(attempt, remaining - 150);
+      } else {
+        this._fineInterval = setInterval(() => {
+          if (Date.now() >= localTarget) {
+            clearInterval(this._fineInterval);
+            this._fineInterval = null;
+            this._fireFromOffset();
+          }
+        }, 5);
+      }
+    };
+    attempt();
+  }
+
+  async _fireFromOffset() {
+    if (!this.sound || !this._isScheduled) return;
+    this._isScheduled = false;
+    try {
+      await this.sound.setPositionAsync(Math.max(0, this._pendingOffset ?? 0));
+      await this.sound.playAsync();
+    } catch (err) {
+      console.error('[AudioPlayer] resume error', err);
+    }
+  }
+
   async pause() {
     this._clearTimers();
     this._isScheduled = false;
