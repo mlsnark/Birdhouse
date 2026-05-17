@@ -55,9 +55,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <TouchableOpacity onLongPress={handleFooterLongPress} delayLongPress={1500}>
-          <Text style={s.footer}>
-            All devices must be on the same network for best results.
-          </Text>
+          <Text style={s.footer} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
