@@ -17,7 +17,7 @@
     "sessions": {
       "$roomCode": {
         ".read": true,
-        ".write": "!data.exists()",
+        ".write": "!data.exists() || !newData.exists()",
 
         "status": {
           ".write": "data.parent().exists()"
