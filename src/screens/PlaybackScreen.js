@@ -133,8 +133,7 @@ export default function PlaybackScreen({ navigation, route }) {
         setPhase('paused');
       } else if (data.status === 'starting' && prev === 'paused') {
         startAtRef.current = data.startAt;
-        const offsetMs = Math.max(0, clockSync.now() - data.startAt);
-        audioPlayer.playFromOffset(offsetMs);
+        if (trackUrl?.trim()) audioPlayer.schedulePlayback(data.startAt);
         setPhase('playing');
         startCaptionTick();
       }
@@ -278,13 +277,10 @@ export default function PlaybackScreen({ navigation, route }) {
               {secondsLeft}
             </Text>
           )}
-          {isPlaying && (
+          {(isPlaying || isPaused) && (
             <View style={styles.playingDisplay}>
-              <PulsingDots />
+              <PulsingDots paused={isPaused} />
             </View>
-          )}
-          {isPaused && (
-            <Text style={styles.pausedIcon}>⏸</Text>
           )}
           {phase === 'loading' && (
             <Text style={styles.loadingText}>Loading…</Text>
@@ -357,13 +353,14 @@ export default function PlaybackScreen({ navigation, route }) {
 }
 
 // Simple animated dots to indicate active playback.
-function PulsingDots() {
+function PulsingDots({ paused = false }) {
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
+    if (paused) return;
     const id = setInterval(() => setFrame((f) => (f + 1) % 4), 400);
     return () => clearInterval(id);
-  }, []);
+  }, [paused]);
 
   return (
     <View style={dots.row}>
@@ -372,7 +369,9 @@ function PulsingDots() {
           key={i}
           style={[
             dots.dot,
-            { opacity: frame > i ? 1 : 0.2 },
+            paused
+              ? { opacity: 1, backgroundColor: colors.danger }
+              : { opacity: frame > i ? 1 : 0.2, backgroundColor: colors.accent },
           ]}
         />
       ))}
@@ -441,7 +440,6 @@ const styles = StyleSheet.create({
   },
 
   playingDisplay: { alignItems: 'center' },
-  pausedIcon: { fontSize: 80, color: colors.textMuted },
   loadingText: {
     fontSize: 24,
     color: colors.textMuted,

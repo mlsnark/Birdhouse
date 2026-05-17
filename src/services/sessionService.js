@@ -253,7 +253,8 @@ export async function resumeSession(roomCode) {
   const snap = await get(ref(db, `sessions/${roomCode}`));
   const session = snap.val();
   const pausedPosition = session.pausedAt - session.startAt;
-  const newStartAt = clockSync.now() - pausedPosition;
+  const resumeAt = clockSync.now() + 1500;
+  const newStartAt = resumeAt - pausedPosition;
   await update(ref(db, `sessions/${roomCode}`), {
     status: 'starting',
     startAt: newStartAt,
