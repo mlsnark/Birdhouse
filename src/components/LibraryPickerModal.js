@@ -32,11 +32,6 @@ export default function LibraryPickerModal({ visible, library, onSelect, onClose
   }
 
   async function handleUpload() {
-    if (Platform.OS === 'android') {
-      Alert.alert('Not available on Android', 'Paste a URL directly instead.');
-      return;
-    }
-    const DocumentPicker = require('expo-document-picker');
     try {
       const DocumentPicker = require('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({
