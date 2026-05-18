@@ -28,6 +28,7 @@
       "package": "com.birdhouse.app",
       "permissions": ["FOREGROUND_SERVICE", "WAKE_LOCK", "android.permission.MODIFY_AUDIO_SETTINGS"]
     },
+    "newArchEnabled": false,
     "plugins": [
       [
         "expo-av",
