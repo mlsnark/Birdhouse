@@ -180,24 +180,48 @@ export default function CreateExperienceScreen({ navigation, route }) {
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
           {/* Poster */}
-          <TouchableOpacity style={s.posterArea} onPress={pickImage} activeOpacity={0.8}>
-            {posterSource ? (
-              <Image source={posterSource} style={s.posterImage} resizeMode="cover" />
-            ) : (
-              <View style={s.posterPlaceholder}>
-                <Text style={s.posterIcon}>🖼</Text>
-                <Text style={s.posterHint}>Tap to add a poster image</Text>
+          {Platform.OS === 'android' ? (
+            <>
+              <View style={s.posterArea}>
+                {posterSource ? (
+                  <Image source={posterSource} style={s.posterImage} resizeMode="cover" />
+                ) : (
+                  <View style={s.posterPlaceholder}>
+                    <Text style={s.posterIcon}>🖼</Text>
+                    <Text style={s.posterHint}>Paste an image URL below</Text>
+                  </View>
+                )}
               </View>
-            )}
-            {uploadingImage && (
-              <View style={s.posterOverlay}>
-                <ActivityIndicator color="#fff" />
+              <TextInput
+                style={[s.input, { marginTop: -16, marginBottom: 24 }]}
+                placeholder="Poster image URL (https://…)"
+                placeholderTextColor={colors.textDim}
+                value={imageUrl ?? ''}
+                onChangeText={(v) => { setImageUrl(v || null); setImageUri(null); }}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+            </>
+          ) : (
+            <TouchableOpacity style={s.posterArea} onPress={pickImage} activeOpacity={0.8}>
+              {posterSource ? (
+                <Image source={posterSource} style={s.posterImage} resizeMode="cover" />
+              ) : (
+                <View style={s.posterPlaceholder}>
+                  <Text style={s.posterIcon}>🖼</Text>
+                  <Text style={s.posterHint}>Tap to add a poster image</Text>
+                </View>
+              )}
+              {uploadingImage && (
+                <View style={s.posterOverlay}>
+                  <ActivityIndicator color="#fff" />
+                </View>
+              )}
+              <View style={s.posterEditBadge}>
+                <Text style={s.posterEditText}>{posterSource ? 'Change' : 'Add'} Image</Text>
               </View>
-            )}
-            <View style={s.posterEditBadge}>
-              <Text style={s.posterEditText}>{posterSource ? 'Change' : 'Add'} Image</Text>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          )}
 
           {/* Details */}
           <Label>Title</Label>
