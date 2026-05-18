@@ -62,27 +62,27 @@ export default function CreateExperienceScreen({ navigation, route }) {
   // ── Image picker ───────────────────────────────────────────────────────────
 
   async function pickImage() {
-    if (Platform.OS === 'android') {
-      Alert.alert('Not available on Android', 'Add a poster image URL when editing on iOS.');
-      return;
-    }
-    const ImagePicker = require('expo-image-picker');
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Allow photo library access to pick a poster image.');
-      return;
-    }
+    try {
+      const ImagePicker = require('expo-image-picker');
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Allow photo library access to pick a poster image.');
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [2, 3],
-      quality: 0.8,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [2, 3],
+        quality: 0.8,
+      });
 
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-      setImageUrl(null); // will be uploaded on publish
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+        setImageUrl(null); // will be uploaded on publish
+      }
+    } catch (err) {
+      Alert.alert('Image picker unavailable', err.message);
     }
   }
 
