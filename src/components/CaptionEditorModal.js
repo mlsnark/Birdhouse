@@ -14,7 +14,6 @@ import {
   Modal, View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
 import { uploadCaptions } from '../services/storageService';
 import { colors, radius } from '../theme';
 
@@ -56,6 +55,7 @@ export default function CaptionEditorModal({
 
   async function handleUploadFile() {
     try {
+      const DocumentPicker = require('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({
         type: ['application/json', 'text/plain', 'public.json'],
         copyToCacheDirectory: true,

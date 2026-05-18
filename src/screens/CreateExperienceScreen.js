@@ -11,7 +11,6 @@ import {
   StyleSheet, SafeAreaView, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, radius } from '../theme';
 import { createExperience, updateExperience, deleteExperience } from '../services/experienceService';
@@ -63,6 +62,7 @@ export default function CreateExperienceScreen({ navigation, route }) {
   // ── Image picker ───────────────────────────────────────────────────────────
 
   async function pickImage() {
+    const ImagePicker = require('expo-image-picker');
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Allow photo library access to pick a poster image.');

@@ -8,7 +8,6 @@ import {
   ScrollView, SafeAreaView, ActivityIndicator, Alert,
   StyleSheet,
 } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
 import { colors, radius } from '../theme';
 import { addTrack, removeTrack } from '../services/trackLibrary';
 import { uploadTrack } from '../services/storageService';
@@ -34,6 +33,7 @@ export default function LibraryPickerModal({ visible, library, onSelect, onClose
 
   async function handleUpload() {
     try {
+      const DocumentPicker = require('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({
         type: 'audio/*',
         copyToCacheDirectory: true,
