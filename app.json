@@ -35,7 +35,9 @@
         {
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-image-picker",
+      "expo-document-picker"
     ],
     "extra": {
       "eas": {
