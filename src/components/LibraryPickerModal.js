@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity,
   ScrollView, SafeAreaView, ActivityIndicator, Alert,
-  StyleSheet,
+  StyleSheet, Platform,
 } from 'react-native';
 import { colors, radius } from '../theme';
 import { addTrack, removeTrack } from '../services/trackLibrary';
@@ -32,6 +32,11 @@ export default function LibraryPickerModal({ visible, library, onSelect, onClose
   }
 
   async function handleUpload() {
+    if (Platform.OS === 'android') {
+      Alert.alert('Not available on Android', 'Paste a URL directly instead.');
+      return;
+    }
+    const DocumentPicker = require('expo-document-picker');
     try {
       const DocumentPicker = require('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({

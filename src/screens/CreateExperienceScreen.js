@@ -62,6 +62,10 @@ export default function CreateExperienceScreen({ navigation, route }) {
   // ── Image picker ───────────────────────────────────────────────────────────
 
   async function pickImage() {
+    if (Platform.OS === 'android') {
+      Alert.alert('Not available on Android', 'Add a poster image URL when editing on iOS.');
+      return;
+    }
     const ImagePicker = require('expo-image-picker');
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {

@@ -54,6 +54,11 @@ export default function CaptionEditorModal({
   }, [visible, captionUrl]);
 
   async function handleUploadFile() {
+    if (Platform.OS === 'android') {
+      Alert.alert('Not available on Android', 'Paste caption JSON directly into the text field.');
+      return;
+    }
+    const DocumentPicker = require('expo-document-picker');
     try {
       const DocumentPicker = require('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({
