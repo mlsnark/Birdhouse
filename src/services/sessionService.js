@@ -156,8 +156,12 @@ export async function joinSessionWithRole(roomCode, deviceId, name, roleId) {
 export async function joinSessionAutoAssign(roomCode, deviceId, name) {
   let errorMessage = null;
 
+  const sessionRef = ref(db, `sessions/${roomCode}`);
+  const initialSnap = await get(sessionRef);
+  if (!initialSnap.exists()) throw new Error('Session not found. Check the room code.');
+
   const { committed } = await runTransaction(
-    ref(db, `sessions/${roomCode}`),
+    sessionRef,
     (session) => {
       if (session === null) { errorMessage = 'Session not found.'; return; }
       if (session.status !== 'lobby') { errorMessage = 'This session has already started.'; return; }
