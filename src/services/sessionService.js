@@ -31,7 +31,6 @@ import {
   remove,
   onValue,
   onDisconnect,
-  runTransaction,
 } from 'firebase/database';
 import { db } from '../config/firebase';
 import clockSync from './clockSync';
@@ -116,83 +115,61 @@ export async function joinSession(roomCode, deviceId, name) {
   return session;
 }
 
-/** Join and select a role. Uses a transaction to prevent double-booking. */
+/** Join and select a role. */
 export async function joinSessionWithRole(roomCode, deviceId, name, roleId) {
-  let errorMessage = null;
-
-  const { committed } = await runTransaction(
-    ref(db, `sessions/${roomCode}`),
-    (session) => {
-      if (session === null) { errorMessage = 'Session not found.'; return; }
-      if (session.status !== 'lobby') { errorMessage = 'This session has already started.'; return; }
-      const role = session.roles?.[roleId];
-      if (!role) { errorMessage = 'Role not found.'; return; }
-      const max = role.maxParticipants ?? 1;
-      if (max !== null && max > 0) {
-        const taken = Object.values(session.participants ?? {}).filter((p) => p.roleId === roleId).length;
-        if (taken >= max) {
-          errorMessage = `This role is full (${max} participant${max === 1 ? '' : 's'} max).`;
-          return;
-        }
-      }
-      if (!session.participants) session.participants = {};
-      session.participants[deviceId] = { name, trackUrl: role.trackUrl, ready: false, isHost: false, roleId };
-      return session;
-    },
-  );
-
-  if (errorMessage) throw new Error(errorMessage);
-  if (!committed) throw new Error('Could not join. Please try again.');
-
-  onDisconnect(ref(db, `sessions/${roomCode}/participants/${deviceId}`)).remove();
   const snap = await get(ref(db, `sessions/${roomCode}`));
-  return snap.val();
+  if (!snap.exists()) throw new Error('Session not found.');
+  const session = snap.val();
+  if (session.status !== 'lobby') throw new Error('This session has already started.');
+
+  const role = session.roles?.[roleId];
+  if (!role) throw new Error('Role not found.');
+
+  const max = role.maxParticipants ?? 1;
+  if (max !== null && max > 0) {
+    const taken = Object.values(session.participants ?? {}).filter((p) => p.roleId === roleId).length;
+    if (taken >= max) {
+      throw new Error(`This role is full (${max} participant${max === 1 ? '' : 's'} max).`);
+    }
+  }
+
+  const participantRef = ref(db, `sessions/${roomCode}/participants/${deviceId}`);
+  await set(participantRef, { name, trackUrl: role.trackUrl, ready: false, isHost: false, roleId });
+  onDisconnect(participantRef).remove();
+  const freshSnap = await get(ref(db, `sessions/${roomCode}`));
+  return freshSnap.val();
 }
 
 /**
  * Auto-assign participant to the role with the lowest fill ratio.
- * Uses a transaction to atomically pick and claim the role.
  */
 export async function joinSessionAutoAssign(roomCode, deviceId, name) {
-  let errorMessage = null;
-
   const sessionRef = ref(db, `sessions/${roomCode}`);
-  const initialSnap = await get(sessionRef);
-  if (!initialSnap.exists()) throw new Error('Session not found. Check the room code.');
+  const snap = await get(sessionRef);
+  if (!snap.exists()) throw new Error('Session not found. Check the room code.');
 
-  const { committed } = await runTransaction(
-    sessionRef,
-    (session) => {
-      if (session === null) { errorMessage = 'Session not found.'; return; }
-      if (session.status !== 'lobby') { errorMessage = 'This session has already started.'; return; }
-      const roles = session.roles ?? {};
-      const participants = session.participants ?? {};
+  const session = snap.val();
+  if (session.status !== 'lobby') throw new Error('This session has already started.');
 
-      let bestRoleId = null;
-      let bestRatio = Infinity;
-      for (const [roleId, role] of Object.entries(roles)) {
-        const max = role.maxParticipants ?? 1;
-        const taken = Object.values(participants).filter((p) => p.roleId === roleId).length;
-        if (max > 0 && taken >= max) continue;
-        const ratio = max === 0 ? 0 : taken / max;
-        if (ratio < bestRatio) { bestRatio = ratio; bestRoleId = roleId; }
-      }
+  const roles = session.roles ?? {};
+  const participants = session.participants ?? {};
 
-      if (!bestRoleId) { errorMessage = 'No available roles.'; return; }
+  let bestRoleId = null;
+  let bestRatio = Infinity;
+  for (const [roleId, role] of Object.entries(roles)) {
+    const max = role.maxParticipants ?? 1;
+    const taken = Object.values(participants).filter((p) => p.roleId === roleId).length;
+    if (max > 0 && taken >= max) continue;
+    const ratio = max === 0 ? 0 : taken / max;
+    if (ratio < bestRatio) { bestRatio = ratio; bestRoleId = roleId; }
+  }
 
-      const role = roles[bestRoleId];
-      if (!session.participants) session.participants = {};
-      session.participants[deviceId] = { name, trackUrl: role.trackUrl, ready: false, isHost: false, roleId: bestRoleId };
-      return session;
-    },
-  );
+  if (!bestRoleId) throw new Error('No available roles.');
 
-  if (errorMessage) throw new Error(errorMessage);
-  if (!committed) throw new Error('Could not join. Please try again.');
-
-  onDisconnect(ref(db, `sessions/${roomCode}/participants/${deviceId}`)).remove();
-  const snap = await get(ref(db, `sessions/${roomCode}`));
-  return snap.val();
+  const role = roles[bestRoleId];
+  const participantRef = ref(db, `sessions/${roomCode}/participants/${deviceId}`);
+  await set(participantRef, { name, trackUrl: role.trackUrl, ready: false, isHost: false, roleId: bestRoleId });
+  onDisconnect(participantRef).remove();
 }
 
 /** Host reassigns a participant's role (and updates their track URL). */
