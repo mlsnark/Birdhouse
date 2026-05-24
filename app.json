@@ -18,7 +18,8 @@
       "buildNumber": "1",
       "infoPlist": {
         "UIBackgroundModes": ["audio"],
-        "NSMicrophoneUsageDescription": "Birdhouse plays synchronized audio tracks."
+        "NSMicrophoneUsageDescription": "Birdhouse plays synchronized audio tracks.",
+        "NSPhotoLibraryUsageDescription": "Allow Birdhouse to access your photos to set a poster image for your performance."
       }
     },
     "android": {
